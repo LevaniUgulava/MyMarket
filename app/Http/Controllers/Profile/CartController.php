@@ -45,18 +45,29 @@ class CartController extends Controller
     public function addcart($id)
     {
         $user = Auth::user();
-        $quantity = 1;
-        $price = Product::where('user_id', $user->id)->where('id', $id)->value('price');
-        $total_price = $price * $quantity;
-        Cart::create([
-            'total_price' => $total_price,
-            'quantity' => $quantity,
-            'product_id' => $id,
-            'user_id' => $user->id,
-        ]);
 
-        return response()->json([
-            'message' => 'added',
-        ]);
+        $cart = Cart::where('user_id', $user->id)->where('product_id', $id)->first();
+        if ($cart) {
+            return response()->json(['message' => 'Already added'], 409);
+        }
+
+        $price = Product::where('user_id', '!=', $user->id)->where('id', $id)->value('price');
+        if (is_null($price)) {
+            return response()->json(['error' => 'Product not found or owned by the user'], 404);
+        }
+
+        $total_price = $price * 1;
+
+        try {
+            Cart::create([
+                'total_price' => $total_price,
+                'quantity' => 1,
+                'product_id' => $id,
+                'user_id' => $user->id,
+            ]);
+            return response()->json(['message' => 'Added successfully'], 201);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to add product to cart'], 500);
+        }
     }
 }
