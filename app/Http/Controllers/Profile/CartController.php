@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Profile;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -69,5 +70,17 @@ class CartController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to add product to cart'], 500);
         }
+    }
+
+    public function full()
+    {
+        $total = 0;
+        $prices = Cart::where('user_id', Auth::user()->id)->pluck('total_price');
+        foreach ($prices as $price) {
+            $total += $price;
+        }
+        return response()->json([
+            'total' => $total,
+        ]);
     }
 }

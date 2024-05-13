@@ -31,4 +31,5 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::post('/unlike/{id}', [CartController::class, 'unLike']);
 
     Route::post('/products/addcart/{id}', [CartController::class, 'addcart']);
+    Route::get('/products/totalmount', [CartController::class, 'full']);
 });
