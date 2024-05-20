@@ -22,16 +22,16 @@ Route::group(['prefix' => 'admin/categories', 'middleware' => ['adminpanel', 'au
 
 
     Route::group(['middleware' => 'editor'], function () {
-        Route::get('/maincategory', [CategoryController::class, 'displaymain']);
         Route::post('/maincategory/create', [CategoryController::class, 'Maincategory']);
         Route::post('/maincategory/delete/{id}', [CategoryController::class, 'Maincategorydelete']);
 
-        Route::get('/category', [CategoryController::class, 'displaycategory']);
         Route::post('/category/create', [CategoryController::class, 'category']);
         Route::post('/category/delete/{id}', [CategoryController::class, 'categorydelete']);
 
-        Route::get('/subcategory', [CategoryController::class, 'displaysub']);
         Route::post('/subcategory/create', [CategoryController::class, 'Subcategory']);
         Route::post('/subcategory/delete/{id}', [CategoryController::class, 'Subcategorydelete']);
     });
 });
+Route::get('/maincategory', [CategoryController::class, 'displaymain']);
+Route::get('/category', [CategoryController::class, 'displaycategory']);
+Route::get('/subcategory', [CategoryController::class, 'displaysub']);

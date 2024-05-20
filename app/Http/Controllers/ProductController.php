@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\ProductResource;
+use App\Models\Product;
 use App\Repository\Product\ProductRepositoryInterface;
 use Illuminate\Http\Request;
 
@@ -32,5 +33,18 @@ class ProductController extends Controller
         return response()->json([
             'message' => 'added Succesfully',
         ], 201);
+    }
+
+    public function filterbyname(Request $request)
+    {
+        $name = '%' . $request->name . '%';
+        $products = Product::where('name', 'LIKE', $name)->get();
+        return ProductResource::collection($products);
+    }
+
+    public function filterbycategory(Request $request)
+    {
+        $products = Product::where('maincategory_id', $request->id)->get();
+        return ProductResource::collection($products);
     }
 }
