@@ -32,4 +32,10 @@ class ProfileController extends Controller
             'message' => 'user updated',
         ]);
     }
+    public function likeproduct()
+    {
+        $user = Auth::user();
+        $products = $user->manyproducts()->get();
+        return ProductResource::collection($products);
+    }
 }

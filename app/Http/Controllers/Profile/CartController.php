@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Profile;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ProductResource;
 use App\Models\Cart;
 use App\Models\Product;
 use App\Models\User;
@@ -82,5 +83,22 @@ class CartController extends Controller
         return response()->json([
             'total' => $total,
         ]);
+    }
+
+    public function mycart()
+    {
+        $user = Auth::user();
+
+        $carts = $user->carts()->with('product')->get();
+
+        $products = collect();
+
+        foreach ($carts as $cart) {
+            if ($cart->product) {
+                $products->push($cart->product);
+            }
+        }
+
+        return ProductResource::collection($products);
     }
 }

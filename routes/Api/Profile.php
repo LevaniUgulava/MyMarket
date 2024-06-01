@@ -25,10 +25,16 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('/myproducts', [ProfileController::class, 'myproducts']);
     Route::post('/profile/update', [ProfileController::class, 'profile']);
+    Route::get('/likeproduct', [ProfileController::class, 'likeproduct']);
+
 
 
     Route::post('/like/{id}', [CartController::class, 'Like']);
     Route::post('/unlike/{id}', [CartController::class, 'unLike']);
+    Route::get('/mycart', [CartController::class, 'mycart']);
+
+
+
 
     Route::post('/products/addcart/{id}', [CartController::class, 'addcart']);
     Route::get('/products/totalmount', [CartController::class, 'full']);
