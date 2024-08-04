@@ -3,13 +3,16 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
@@ -44,18 +47,26 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    public function Products()
-    {
-        return $this->hasMany(Product::class);
-    }
+
 
     public function manyproducts()
     {
         return $this->belongsToMany(Product::class, 'user_product');
     }
 
-    public function carts()
+
+    public function commentproduct()
     {
-        return $this->hasMany(Cart::class);
+        return $this->belongsToMany(Product::class, 'product_comment')->withPivot('comment')->withTimestamps();
+    }
+
+    public function orderproduct()
+    {
+        return $this->belongsToMany(Product::class, 'cart')->withPivot('quantity', 'total_price');
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->hasRole(['admin', 'operator', 'editor']);
     }
 }

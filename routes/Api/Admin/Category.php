@@ -21,7 +21,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::group(['prefix' => 'admin/categories', 'middleware' => ['adminpanel', 'auth:sanctum']], function () {
 
 
-    Route::group(['middleware' => 'editor'], function () {
+    Route::group(['middleware' => 'admin'], function () {
         Route::post('/maincategory/create', [CategoryController::class, 'Maincategory']);
         Route::post('/maincategory/delete/{id}', [CategoryController::class, 'Maincategorydelete']);
 

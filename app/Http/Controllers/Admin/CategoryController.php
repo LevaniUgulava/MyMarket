@@ -38,7 +38,7 @@ class CategoryController extends Controller
 
     public function displaycategory()
     {
-        $Category = Category::all();
+        $Category = Category::with('Maincategory')->get();
         return $Category;
     }
 
@@ -64,7 +64,7 @@ class CategoryController extends Controller
 
     public function displaysub()
     {
-        $Subcategory = Subcategory::all();
+        $Subcategory = Subcategory::with('Category', 'Maincategory')->get();
         return $Subcategory;
     }
 

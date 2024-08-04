@@ -15,10 +15,43 @@ class ProductController extends Controller
     {
         $this->productRepository = $productRepository;
     }
-
-    public function display()
+    public function display(Request $request)
     {
-        $products = $this->productRepository->display();
+        $name = $request->query('searchname', '');
+        $maincategoryid = $request->query('maincategory', '');
+        $pagination = $request->get('perPage', 16);
+
+        $products = $this->productRepository->display($name, $maincategoryid, $pagination);
+        return ProductResource::collection($products);
+    }
+
+
+    public function isliked(Product $product)
+    {
+        $data = $this->productRepository->isliked($product);
+        return response()->json($data);
+    }
+    public function admindisplay(Request $request)
+    {
+        $pagination = $request->query('perPage', 8); // Default to 8 if 'perPage' is not provided
+        $products = $this->productRepository->admindisplay($pagination);
+        return ProductResource::collection($products);
+    }
+    
+    public function notactive($id)
+    {
+        $products = $this->productRepository->notactive($id);
+        return response()->json(['message' => 'yes']);
+    }
+    public function active($id)
+    {
+        $products = $this->productRepository->active($id);
+        return response()->json(['message' => 'yes']);
+    }
+
+    public function displaybyid($id)
+    {
+        $products = $this->productRepository->displaybyid($id);
         return ProductResource::collection($products);
     }
 
@@ -36,16 +69,22 @@ class ProductController extends Controller
         ], 201);
     }
 
-    public function filterbyname(Request $request)
-    {
-        $name = '%' . $request->name . '%';
-        $products = Product::where('name', 'LIKE', $name)->get();
-        return ProductResource::collection($products);
-    }
 
-    public function filterbycategory(Request $request)
+    public function discount(Request $request)
     {
-        $products = Product::where('maincategory_id', $request->id)->get();
-        return ProductResource::collection($products);
+
+        $ids = $request->id;
+        $discount = $request->discount;
+
+        foreach ($ids as $id) {
+            $product = Product::findOrFail($id);
+            $price = $product->price;
+            $product->update([
+                "discount" => $discount,
+                "discountprice" => $price * ((100 - $discount) / 100)
+            ]);
+        }
+
+        return response()->json("success");
     }
 }

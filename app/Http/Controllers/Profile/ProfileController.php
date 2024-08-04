@@ -19,14 +19,20 @@ class ProfileController extends Controller
             ->where('user_id', Auth::user()->id)->get();
         return ProductResource::collection($products);
     }
+    public function getprofile()
+    {
+        $user = Auth::user();
+        return response()->json([
+            'message' => $user,
+        ]);
+    }
 
-    public function profile(RegisterRequest $request)
+    public function profile(Request $request)
     {
         $user = Auth::user();
         $user->update([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
         ]);
         return response()->json([
             'message' => 'user updated',

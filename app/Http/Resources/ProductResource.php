@@ -19,12 +19,16 @@ class ProductResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
             'price' => $this->price,
+            'discount' => $this->discount,
+            'discountprice' => $this->discountprice,
             'MainCategory' => $this->MainCategory->name,
             'Category' => $this->Category->name,
-            'SubCaregory' => $this->Subcategory->name,
+            'SubCategory' => $this->Subcategory->name,
             'Contacts' => $this->Contacts->pluck('number'),
-            'User' => $this->user->name,
-
+            'image_urls' => $this->getMedia('default')->map(function ($media) {
+                return url('storage/' . $media->id . '/' . $media->file_name); // Ensure full URL is returned
+            }),
+            'active' => $this->active
         ];
     }
 }

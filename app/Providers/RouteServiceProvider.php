@@ -25,7 +25,7 @@ class RouteServiceProvider extends ServiceProvider
     public function boot(): void
     {
         RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+            $this->configureRateLimiting();
         });
 
         $this->routes(function () {
@@ -36,6 +36,8 @@ class RouteServiceProvider extends ServiceProvider
                 require base_path('routes/Api/Profile.php');
                 require base_path('routes/Api/Admin/Category.php');
                 require base_path('routes/Api/Admin/Roles.php');
+                require base_path('routes/Api/Comment.php');
+                require base_path('routes/Api/Cart.php');
             });
 
 
@@ -43,5 +45,15 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
         });
+    }
+    protected function configureRateLimiting()
+    {
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(60); // Allow 60 requests per minute
+        });
+        RateLimiter::for('global', function ($request) {
+            return Limit::perMinute(100); // Global rate limit of 100 requests per minute
+        });
+
     }
 }

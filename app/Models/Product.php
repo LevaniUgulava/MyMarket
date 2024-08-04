@@ -12,6 +12,22 @@ class Product extends Model implements HasMedia
     use HasFactory, InteractsWithMedia;
     protected $guarded = [];
 
+    public function scopeSearchname($query, $name)
+    {
+        if ($name) {
+            return $query->where('name', 'LIKE', '%' . $name . '%');
+        }
+
+        return $query;
+    }
+
+    public function scopeSearchmain($query, $maincategoryid)
+    {
+        if ($maincategoryid) {
+            return $query->where('maincategory_id', $maincategoryid);
+        }
+    }
+
     public function Category()
     {
         return $this->belongsTo(Category::class);
@@ -40,8 +56,12 @@ class Product extends Model implements HasMedia
         return $this->belongsToMany(User::class, 'user_product');
     }
 
-    public function cart()
+    public function commentusers()
     {
-        return $this->hasOne(Cart::class);
+        return $this->belongsToMany(User::class, 'product_comment')->withPivot('comment')->withTimestamps();
+    }
+    public function orderuser()
+    {
+        return $this->belongsToMany(User::class, 'cart')->withPivot('quantity', 'total_price');
     }
 }

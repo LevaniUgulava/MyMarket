@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\Profile;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ProductResource;
-use App\Models\Cart;
+
 use App\Models\Product;
-use App\Models\User;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -44,61 +43,83 @@ class CartController extends Controller
         }
     }
 
-    public function addcart($id)
+    public function count(Product $product)
     {
-        $user = Auth::user();
-
-        $cart = Cart::where('user_id', $user->id)->where('product_id', $id)->first();
-        if ($cart) {
-            return response()->json(['message' => 'Already added'], 409);
-        }
-
-        $price = Product::where('user_id', '!=', $user->id)->where('id', $id)->value('price');
-        if (is_null($price)) {
-            return response()->json(['error' => 'Product not found or owned by the user'], 404);
-        }
-
-        $total_price = $price * 1;
-
-        try {
-            Cart::create([
-                'total_price' => $total_price,
-                'quantity' => 1,
-                'product_id' => $id,
-                'user_id' => $user->id,
-            ]);
-            return response()->json(['message' => 'Added successfully'], 201);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to add product to cart'], 500);
-        }
-    }
-
-    public function full()
-    {
-        $total = 0;
-        $prices = Cart::where('user_id', Auth::user()->id)->pluck('total_price');
-        foreach ($prices as $price) {
-            $total += $price;
-        }
+        $countcomment =  $product->commentusers()->count();
+        $countlike = $product->users()->count();
         return response()->json([
-            'total' => $total,
+            'countlike' => $countlike,
+            'liked' => true,
+            'countcomment' => $countcomment
+
         ]);
     }
 
-    public function mycart()
+    public function cart(Product $product)
+    {
+
+        $quantity =  1;
+        $totalPrice = $product->discountprice * $quantity;
+
+        $user = Auth::user();
+        if (!$user->orderproduct()->where("product_id", $product->id)->exists()) {
+            $user->orderproduct()->attach($product->id, [
+                'retail_price' => $product->discountprice,
+                'quantity' => $quantity,
+                'total_price' => $totalPrice
+            ]);
+            return response()->json([
+                'message' => 'Product added to cart successfully.'
+            ]);
+        } else {
+            return response()->json(["message" => "alredy exist"]);
+        }
+    }
+
+    public function getcart()
     {
         $user = Auth::user();
-
-        $carts = $user->carts()->with('product')->get();
-
-        $products = collect();
-
-        foreach ($carts as $cart) {
-            if ($cart->product) {
-                $products->push($cart->product);
-            }
+        $products = $user->orderproduct()->get()->map(function ($product) {
+            $product->image_urls = $product->getMedia('default')->map(function ($media) {
+                return url('storage/' . $media->id . '/' . $media->file_name); // Ensure full URL is returned
+            });
+            return $product;
+        });
+        $allprice = 0;
+        foreach ($products as $price) {
+            $allprice += $price->pivot->total_price;
         }
+        return response()->json(["product" => $products, "allprice" => $allprice]);
+    }
 
-        return ProductResource::collection($products);
+    public function updatequantity($id, $action)
+    {
+        $user = Auth::user();
+        $data = $user->orderproduct()->where('product_id', $id)->first();
+
+        if ($data) {
+            if ($action == 'increment') {
+                $data->pivot->quantity++;
+            } elseif ($action == 'decrement' && $data->pivot->quantity > 1) {
+                $data->pivot->quantity--;
+            }
+            $data->pivot->total_price = $data->discountprice * $data->pivot->quantity;
+
+            $data->pivot->save();
+
+
+
+            return response()->json();
+        } else {
+            return response()->json(['error' => 'Product not found in user orders'], 404);
+        }
+    }
+
+    public function deletecart($id)
+    {
+        $user = Auth::user();
+        $user->orderproduct()->detach($id);
+
+        return response()->json(["message" => "you deleted product"]);
     }
 }

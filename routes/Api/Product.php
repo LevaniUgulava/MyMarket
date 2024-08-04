@@ -22,6 +22,12 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 
 Route::get('/display', [ProductController::class, 'display']);
-Route::post('/addproduct', [ProductController::class, 'create'])->middleware('auth:sanctum');
+Route::get('/isliked', [ProductController::class, 'isliked'])->middleware('auth:sanctum');
+Route::get('/admindisplay', [ProductController::class, 'admindisplay']);
+Route::get('/display/{id}', [ProductController::class, 'displaybyid']);
 Route::post('/Search', [ProductController::class, 'filterbyname']);
 Route::get('/Searchcategory/{id}', [ProductController::class, 'filterbycategory']);
+Route::post('/addproduct', [ProductController::class, 'create']);
+Route::post('/notactive/{id}', [ProductController::class, 'notactive']);
+Route::post('/active/{id}', [ProductController::class, 'active']);
+Route::post('/discount', [ProductController::class, 'discount']);

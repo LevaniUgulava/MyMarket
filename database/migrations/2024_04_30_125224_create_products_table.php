@@ -16,10 +16,12 @@ return new class extends Migration
             $table->string('name');
             $table->string('description');
             $table->integer('price');
+            $table->integer('discount')->default(0);
+            $table->decimal('discountprice', 8, 2)->default(0);
             $table->unsignedBigInteger('maincategory_id');
             $table->unsignedBigInteger('category_id');
             $table->unsignedBigInteger('subcategory_id');
-            $table->unsignedBigInteger('user_id');
+            $table->boolean('active')->default(1);
 
 
             $table->timestamps();

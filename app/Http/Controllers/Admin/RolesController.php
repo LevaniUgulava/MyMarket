@@ -24,7 +24,7 @@ class RolesController extends Controller
     public function update(User $user, Role $role)
     {
         $user->syncRoles($role);
-        return redirect()->back();
+        return response()->json(['message' => 'Role assigned successfully.']);
     }
     public function remove(User $user, Role $role)
     {
