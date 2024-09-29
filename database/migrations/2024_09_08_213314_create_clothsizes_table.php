@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ProductSize;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -11,9 +12,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('main_categories', function (Blueprint $table) {
+        Schema::create('clothsizes', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('size')->default(ProductSize::XS);
+            $table->unsignedBigInteger('product_id');
+            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -23,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('main_categories');
+        Schema::dropIfExists('clothsizes');
     }
 };

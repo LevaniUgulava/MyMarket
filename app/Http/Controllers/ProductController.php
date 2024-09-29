@@ -2,11 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ProductSize;
+use App\Helpers\EnumHelper;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
+use App\Models\User;
+use App\Notifications\DiscountNotification;
+use App\Notifications\RegisterNotification;
 use App\Repository\Product\ProductRepositoryInterface;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
+use \App\Helpers;
+use App\Http\Requests\CreateProductRequest;
+use Illuminate\Support\Facades\Log;
+use Intervention\Image\Gd\Commands\GetSizeCommand;
 
 class ProductController extends Controller
 {
@@ -17,27 +27,27 @@ class ProductController extends Controller
     }
     public function display(Request $request)
     {
+        $user = auth('sanctum')->user();
         $name = $request->query('searchname', '');
         $maincategoryid = $request->query('maincategory', '');
-        $pagination = $request->get('perPage', 16);
+        $categoryid = $request->query('category', '');
+        $subcategoryid = $request->query('subcategory', '');
 
-        $products = $this->productRepository->display($name, $maincategoryid, $pagination);
+        $pagination = $request->get('perPage', 25);
+        $products = $this->productRepository->display($name, $maincategoryid, $categoryid, $subcategoryid, $pagination, $user);
         return ProductResource::collection($products);
     }
 
 
-    public function isliked(Product $product)
-    {
-        $data = $this->productRepository->isliked($product);
-        return response()->json($data);
-    }
+
     public function admindisplay(Request $request)
     {
-        $pagination = $request->query('perPage', 8); // Default to 8 if 'perPage' is not provided
+        $pagination = $request->query('perPage', 10);
+
         $products = $this->productRepository->admindisplay($pagination);
         return ProductResource::collection($products);
     }
-    
+
     public function notactive($id)
     {
         $products = $this->productRepository->notactive($id);
@@ -57,17 +67,31 @@ class ProductController extends Controller
 
     public function create(Request $request)
     {
-        $check = $this->productRepository->create($request);
-        if (!$check) {
+        try {
+            $check = $this->productRepository->create($request);
+
+            if (!$check) {
+                return response()->json([
+                    'message' => 'Something went wrong!!',
+                ], 500);
+            }
+
             return response()->json([
-                'message' => 'Something went wrong!!',
+                'message' => 'Added Successfully',
+            ], 201);
+        } catch (\Exception $e) {
+            Log::error('Product creation failed: ' . $e->getMessage(), [
+                'exception' => $e,
+                'request_data' => $request->all(),
+            ]);
+
+            return response()->json([
+                'message' => 'Product creation failed',
+                'error' => $e->getMessage(),
             ], 500);
         }
-
-        return response()->json([
-            'message' => 'added Succesfully',
-        ], 201);
     }
+
 
 
     public function discount(Request $request)
@@ -75,6 +99,7 @@ class ProductController extends Controller
 
         $ids = $request->id;
         $discount = $request->discount;
+
 
         foreach ($ids as $id) {
             $product = Product::findOrFail($id);
@@ -84,7 +109,31 @@ class ProductController extends Controller
                 "discountprice" => $price * ((100 - $discount) / 100)
             ]);
         }
+        if ($request->send) {
+            $users = User::get();
+            foreach ($users as $user) {
+                $user->notify(new DiscountNotification($ids, $user->name, $discount));
+            }
+            $this->discountproducts($ids);
+        }
 
         return response()->json("success");
+    }
+    public function discountproducts($ids)
+    {
+        if (empty($ids)) {
+            return response()->json("No discounted products found", 404);
+        }
+
+        $products = Product::whereIn('id', $ids)->get();
+
+        return response()->json($products);
+    }
+
+    public function getSizes()
+    {
+        return response()->json([
+            "sizes" => EnumHelper::GetSizesAsArray(),
+        ]);
     }
 }

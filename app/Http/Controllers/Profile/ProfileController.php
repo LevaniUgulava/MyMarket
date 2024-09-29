@@ -13,19 +13,19 @@ use Illuminate\Support\Facades\Hash;
 
 class ProfileController extends Controller
 {
-    public function myproducts()
-    {
-        $products = Product::with('Maincategory', 'Category', 'Subcategory', 'Contacts', 'user')
-            ->where('user_id', Auth::user()->id)->get();
-        return ProductResource::collection($products);
-    }
-    public function getprofile()
-    {
-        $user = Auth::user();
-        return response()->json([
-            'message' => $user,
-        ]);
-    }
+    // public function myproducts()
+    // {
+    //     $products = Product::with('Maincategory', 'Category', 'Subcategory', 'Contacts', 'user')
+    //         ->where('user_id', Auth::user()->id)->get();
+    //     return ProductResource::collection($products);
+    // }
+    // public function getprofile()
+    // {
+    //     $user = Auth::user();
+    //     return response()->json([
+    //         'message' => $user,
+    //     ]);
+    // }
 
     public function profile(Request $request)
     {
@@ -38,10 +38,21 @@ class ProfileController extends Controller
             'message' => 'user updated',
         ]);
     }
+    public function getprofile()
+    {
+        $user = Auth::user();
+
+        return response()->json([
+            'user' => $user
+        ]);
+    }
     public function likeproduct()
     {
         $user = Auth::user();
         $products = $user->manyproducts()->get();
+        foreach ($products as $product) {
+            $product->isLiked = true;
+        }
         return ProductResource::collection($products);
     }
 }

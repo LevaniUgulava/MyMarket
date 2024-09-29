@@ -42,7 +42,7 @@ class AuthController extends Controller
         }
 
 
-        $token = $user->createToken('api')->plainTextToken;
+        $token = $user->createToken('api', [], now()->addDays(3))->plainTextToken;
         $roles = $user->getRoleNames();
         return response()->json([
             'id' => $user->id,

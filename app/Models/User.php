@@ -12,7 +12,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
@@ -25,6 +25,8 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'password',
+        'confirmation_token',
+        'email_verified_at'
     ];
 
     /**
@@ -60,13 +62,23 @@ class User extends Authenticatable implements FilamentUser
         return $this->belongsToMany(Product::class, 'product_comment')->withPivot('comment')->withTimestamps();
     }
 
-    public function orderproduct()
+    public function carts()
     {
-        return $this->belongsToMany(Product::class, 'cart')->withPivot('quantity', 'total_price');
+        return $this->hasMany(Cart::class);
     }
 
-    public function canAccessPanel(Panel $panel): bool
+
+    public function orders()
     {
-        return $this->hasRole(['admin', 'operator', 'editor']);
+        return $this->hasMany(Order::class);
+    }
+
+
+    public function cartItems()
+    {
+        return $this->hasMany(Cart::class)
+            ->join('cart_item', 'cart.id', '=', 'cart_item.cart_id')
+            ->join('products', 'products.id', '=', 'cart_item.product_id')
+            ->select('products.*', 'cart_item.quantity', 'cart_item.retail_price', 'cart_item.size', 'cart_item.total_price');
     }
 }

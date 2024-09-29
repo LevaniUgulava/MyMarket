@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers\Profile;
 
+use App\Enums\ProductSize;
 use App\Http\Controllers\Controller;
-
+use App\Models\Cart;
+use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
+use function Laravel\Prompts\select;
 
 class CartController extends Controller
 {
@@ -55,71 +60,120 @@ class CartController extends Controller
         ]);
     }
 
-    public function cart(Product $product)
+
+
+
+
+    public function cart(Product $product, Request $request)
     {
 
-        $quantity =  1;
-        $totalPrice = $product->discountprice * $quantity;
-
         $user = Auth::user();
-        if (!$user->orderproduct()->where("product_id", $product->id)->exists()) {
-            $user->orderproduct()->attach($product->id, [
-                'retail_price' => $product->discountprice,
-                'quantity' => $quantity,
-                'total_price' => $totalPrice
-            ]);
-            return response()->json([
-                'message' => 'Product added to cart successfully.'
+
+        $existingCart = $user->carts()->latest()->first();
+
+        if (!$existingCart) {
+            $cart = Cart::create([
+                'user_id' => $user->id,
             ]);
         } else {
-            return response()->json(["message" => "alredy exist"]);
+            $cart = $existingCart;
+        }
+
+        $cartItem = $cart->products()->where('product_id', $product->id)->first();
+        $quantity =  1;
+        $size = $request->size ? $request->size : ProductSize::XS->value;
+        $totalPrice = $product->discountprice * $quantity;
+        if ($cartItem) {
+            return response()->json(['message' => 'Product added Already']);
+        } else {
+
+            $cart->products()->attach($product->id, [
+                'quantity' => $quantity,
+                'size' => $size,
+                'retail_price' => $product->discountprice,
+                'total_price' => $totalPrice
+            ]);
+            return response()->json(['message' => 'Product added to cart successfully']);
         }
     }
+
 
     public function getcart()
     {
         $user = Auth::user();
-        $products = $user->orderproduct()->get()->map(function ($product) {
-            $product->image_urls = $product->getMedia('default')->map(function ($media) {
-                return url('storage/' . $media->id . '/' . $media->file_name); // Ensure full URL is returned
+
+        $products = $user->cartItems()->get()->map(function ($product) {
+            $productModel = Product::find($product->id);
+
+            $product->image_urls = $productModel->getMedia('default')->map(function ($media) {
+                return  url('storage/' . $media->id . '/' . $media->file_name);
             });
+
             return $product;
         });
-        $allprice = 0;
-        foreach ($products as $price) {
-            $allprice += $price->pivot->total_price;
-        }
-        return response()->json(["product" => $products, "allprice" => $allprice]);
+
+        $totalPrice = $products->sum('total_price');
+
+        return response()->json(["products" => $products, 'totalPrice' => $totalPrice]);
     }
 
-    public function updatequantity($id, $action)
+
+
+
+
+    public function updatequantity($id, $action, Request $request)
     {
+
+
         $user = Auth::user();
-        $data = $user->orderproduct()->where('product_id', $id)->first();
+        $data = $user->cartItems()->where('product_id', $id)->first();
 
+        $cart = $user->carts()->first();
         if ($data) {
-            if ($action == 'increment') {
-                $data->pivot->quantity++;
-            } elseif ($action == 'decrement' && $data->pivot->quantity > 1) {
-                $data->pivot->quantity--;
+            $currentquantity = $data->quantity;
+
+            if ($action === 'increment') {
+                $currentquantity++;
+            } elseif ($action === 'decrement' && $currentquantity > 1) {
+                $currentquantity--;
+            } else {
+                return response()->json(['error' => 'Invalid action or quantity'], 400);
             }
-            $data->pivot->total_price = $data->discountprice * $data->pivot->quantity;
 
-            $data->pivot->save();
+            $newTotalPrice = $data->discountprice * $currentquantity;
 
+            $updated = DB::table('cart_item')
+                ->where('cart_id', $cart->id)
+                ->where('product_id', $id)
+                ->where('size', $request->size)
+                ->update([
+                    'quantity' => $currentquantity,
+                    'total_price' => $newTotalPrice
+                ]);
 
-
-            return response()->json();
+            if ($updated) {
+                return response()->json(['message' => 'Quantity updated successfully']);
+            } else {
+                return response()->json(['error' => 'Failed to update quantity'], 500);
+            }
         } else {
             return response()->json(['error' => 'Product not found in user orders'], 404);
         }
     }
 
-    public function deletecart($id)
+
+    public function deletecart($id, Request $request)
     {
         $user = Auth::user();
-        $user->orderproduct()->detach($id);
+        $cart = $user->cartItems()->delete();
+        // $i = DB::table('cart_item')
+        //     ->where('cart_id', $cart->id)
+        //     ->where('product_id', $id)
+        //     ->where('size', $request->size)
+        //     ->delete();
 
-        return response()->json(["message" => "you deleted product"]);
+        if ($cart) {
+            return response()->json(["message" => "you deleted product"]);
+        }
     }
 }

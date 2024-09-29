@@ -19,16 +19,31 @@ class ProductResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
             'price' => $this->price,
+            'size' => $this->clothsize->isNotEmpty()
+                ? $this->clothsize->map(function ($size) {
+                    return [
+                        'size' => $size->size,
+                        'quantity' => $size->quantities->isNotEmpty() ? $size->quantities->first()->quantity : null
+                    ];
+                })
+                : ($this->shoesize->isNotEmpty()
+                    ? $this->shoesize->map(function ($size) {
+                        return [
+                            'size' => $size->size,
+                            'quantity' => $size->quantities->isNotEmpty() ? $size->quantities->first()->quantity : null
+                        ];
+                    })
+                    : null),
             'discount' => $this->discount,
             'discountprice' => $this->discountprice,
             'MainCategory' => $this->MainCategory->name,
             'Category' => $this->Category->name,
             'SubCategory' => $this->Subcategory->name,
-            'Contacts' => $this->Contacts->pluck('number'),
             'image_urls' => $this->getMedia('default')->map(function ($media) {
-                return url('storage/' . $media->id . '/' . $media->file_name); // Ensure full URL is returned
+                return url('storage/' . $media->id . '/' . $media->file_name);
             }),
-            'active' => $this->active
+            'active' => $this->active,
+            'isLiked' => $this->isLiked ?? false,
         ];
     }
 }

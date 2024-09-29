@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ProductSize;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
@@ -11,6 +12,10 @@ class Product extends Model implements HasMedia
 {
     use HasFactory, InteractsWithMedia;
     protected $guarded = [];
+    protected $casts = [
+        'size' => 'array',
+    ];
+
 
     public function scopeSearchname($query, $name)
     {
@@ -27,6 +32,19 @@ class Product extends Model implements HasMedia
             return $query->where('maincategory_id', $maincategoryid);
         }
     }
+    public function scopeSearchcategory($query, $categoryid)
+    {
+        if ($categoryid) {
+            return $query->where('category_id', $categoryid);
+        }
+    }
+    public function scopeSearchsubcategory($query, $subcategoryid)
+    {
+        if ($subcategoryid) {
+            return $query->where('category_id', $subcategoryid);
+        }
+    }
+
 
     public function Category()
     {
@@ -46,11 +64,6 @@ class Product extends Model implements HasMedia
     }
 
 
-    public function Contacts()
-    {
-        return $this->hasMany(Contact::class);
-    }
-
     public function users()
     {
         return $this->belongsToMany(User::class, 'user_product');
@@ -60,8 +73,31 @@ class Product extends Model implements HasMedia
     {
         return $this->belongsToMany(User::class, 'product_comment')->withPivot('comment')->withTimestamps();
     }
-    public function orderuser()
+
+
+    public function shoesize()
     {
-        return $this->belongsToMany(User::class, 'cart')->withPivot('quantity', 'total_price');
+        return $this->hasMany(Shoessize::class);
+    }
+
+    public function clothsize()
+    {
+        return $this->hasMany(Clothsize::class);
+    }
+
+
+    public function carts()
+    {
+        return $this->belongsToMany(Cart::class, 'cart_item')
+            ->join()
+            ->withPivot('quantity', 'retail_price')
+            ->withTimestamps();
+    }
+
+    public function orders()
+    {
+        return $this->belongsToMany(Order::class, 'order_item')
+            ->withPivot('quantity', 'size', 'retail_price', 'total_price')
+            ->withTimestamps();
     }
 }

@@ -8,14 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class Cart extends Model
 {
     protected $guarded = [];
+    protected $table = 'cart';
     use HasFactory;
 
-    public function user()
+    public function products()
     {
-        return $this->belongsTo(User::class);
-    }
-    public function product()
-    {
-        return $this->belongsTo(Product::class);
+        return $this->belongsToMany(Product::class, 'cart_item')
+            ->withPivot('quantity', 'retail_price')
+            ->withTimestamps();
     }
 }
