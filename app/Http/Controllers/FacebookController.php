@@ -31,7 +31,6 @@ class FacebookController extends Controller
             $roles = $existingUser->getRoleNames();
             return response()->json(['token' => $token, 'roles' => $roles]);
         } else {
-            // If user does not exist, create a new user
             $newUser = new User();
             $newUser->name = $fbUser->name;
             $newUser->email = $fbUser->email;

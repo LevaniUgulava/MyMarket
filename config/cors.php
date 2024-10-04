@@ -16,18 +16,12 @@ return [
     */
 
     'paths' => ['api/*'],
-
-    'allowed_methods' => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-
-    'allowed_origins' => ['*'], // For development, or specify your frontend URL
-
-    'allowed_origins_patterns' => [],
-
+    'allowed_origins' => ['http://localhost:8080'],
+    'allowed_methods' => ['*'],
     'allowed_headers' => ['*'],
-
-    'exposed_headers' => [],
-
+    'exposed_headers' => false,
     'max_age' => 0,
-
     'supports_credentials' => false,
+
+
 ];

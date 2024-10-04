@@ -32,7 +32,7 @@ class ProductRepository implements ProductRepositoryInterface
             ->searchsubcategory($subcategoryid)
             ->paginate($pagination);
 
-       
+
         $products->getCollection()->transform(function ($product) use ($user) {
             // Add image URLs from the media library
             $product->image_urls = $product->getMedia('default')->map(function ($media) {

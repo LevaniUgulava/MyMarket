@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->integer('facebook_id')->nullable();
+            $table->string('facebook_id')->nullable();
+            $table->string('google_id')->nullable();
             $table->string('confirmation_token')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->nullable();
