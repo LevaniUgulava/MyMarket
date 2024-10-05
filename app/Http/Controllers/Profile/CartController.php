@@ -79,7 +79,7 @@ class CartController extends Controller
             $cart = $existingCart;
         }
 
-        $cartItem = $cart->products()->where('product_id', $product->id)->first();
+        $cartItem = $cart->products()->where('product_id', $product->id)->where('size', $request->size)->first();
         $quantity =  1;
         $size = $request->size ? $request->size : ProductSize::XS->value;
         $totalPrice = $product->discountprice * $quantity;
@@ -126,7 +126,7 @@ class CartController extends Controller
 
 
         $user = Auth::user();
-        $data = $user->cartItems()->where('product_id', $id)->first();
+        $data = $user->cartItems()->where('product_id', $id)->where('size', $request->size)->first();
 
         $cart = $user->carts()->first();
         if ($data) {
@@ -165,15 +165,33 @@ class CartController extends Controller
     public function deletecart($id, Request $request)
     {
         $user = Auth::user();
-        $cart = $user->cartItems()->delete();
-        // $i = DB::table('cart_item')
-        //     ->where('cart_id', $cart->id)
-        //     ->where('product_id', $id)
-        //     ->where('size', $request->size)
-        //     ->delete();
 
-        if ($cart) {
-            return response()->json(["message" => "you deleted product"]);
+        $cart = $user->carts()->first();
+
+        if (!$cart) {
+            return response()->json(['error' => 'Cart not found'], 404);
+        }
+
+        $cartItem = DB::table('cart_item')
+            ->where('cart_id', $cart->id)
+            ->where('product_id', $id)
+            ->where('size', $request->size)
+            ->first();
+
+        if (!$cartItem) {
+            return response()->json(['error' => 'Product not found in cart'], 404);
+        }
+
+        $deleted = DB::table('cart_item')
+            ->where('cart_id', $cart->id)
+            ->where('product_id', $id)
+            ->where('size', $request->size)
+            ->delete();
+
+        if ($deleted) {
+            return response()->json(["message" => "Product deleted from cart"]);
+        } else {
+            return response()->json(["error" => "Failed to delete product"], 500);
         }
     }
 }
