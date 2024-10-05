@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Profile;
 
 use App\Enums\ProductSize;
+use App\Helpers\ProductHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\Product;
+use App\Services\ProductService;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -121,18 +123,22 @@ class CartController extends Controller
 
 
 
-    public function updatequantity($id, $action, Request $request)
+    public function updatequantity($id, $action, Request $request, ProductService $productService)
     {
 
 
         $user = Auth::user();
         $data = $user->cartItems()->where('product_id', $id)->where('size', $request->size)->first();
 
+        $product = Product::with('clothsize.quantities')->where('id', $id)->first();
+
+        $fullquantity = $productService->getClothsize($product, $request->size);
+
         $cart = $user->carts()->first();
         if ($data) {
             $currentquantity = $data->quantity;
 
-            if ($action === 'increment') {
+            if ($action === 'increment' && $fullquantity > $currentquantity) {
                 $currentquantity++;
             } elseif ($action === 'decrement' && $currentquantity > 1) {
                 $currentquantity--;
@@ -160,6 +166,8 @@ class CartController extends Controller
             return response()->json(['error' => 'Product not found in user orders'], 404);
         }
     }
+
+
 
 
     public function deletecart($id, Request $request)

@@ -44,6 +44,8 @@ class OrderController extends Controller
 
             $groupedOrders[] = [
                 'order_id' => $order->id,
+                'order_amount' => $order->amount_paid,
+                'order_status' => $order->status,
                 'products' => $products
             ];
         }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Quantity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -44,14 +45,45 @@ class PaymentController extends Controller
                     'created_at'   => now(),
                     'updated_at'   => now(),
                 ]);
+                $i = $this->managequantity($item->id, $item->size, $item->quantity);
             }
             $cart->products()->detach();
 
             $cart->delete();
 
 
-
-            return response()->json('transaction ended completed');
+            return response()->json($i);
         }
+    }
+
+    private function managequantity($id, $size, $quantity)
+    {
+        $product = Product::with('clothsize.quantities')->where('id', $id)->first();
+
+        if ($product) {
+            $clothsize = $product->clothsize->where('size', $size)->first();
+
+            if ($clothsize) {
+                $currentquantity = $clothsize->quantities()->first();
+
+                if ($currentquantity && $currentquantity->quantity == 0) {
+                    $clothsize->delete();
+                }
+
+                if ($currentquantity && $currentquantity->quantity >= $quantity) {
+                    $currentquantity->update([
+                        'quantity' => $currentquantity->quantity - $quantity
+                    ]);
+
+                    if ($currentquantity->quantity == 0) {
+                        $clothsize->delete();
+                    }
+
+                    return "transaction ended succesfully";
+                }
+            }
+            return 'Size not found';
+        }
+        return 'Product not found';
     }
 }
