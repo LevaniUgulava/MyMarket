@@ -17,6 +17,8 @@ class Product extends Model implements HasMedia
     ];
 
 
+
+
     public function scopeSearchname($query, $name)
     {
         if ($name) {

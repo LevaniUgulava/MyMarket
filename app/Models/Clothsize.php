@@ -14,8 +14,13 @@ class Clothsize extends Model
     {
         parent::boot();
 
-        static::deleting(function ($clothsize) {
+        static::deleted(function ($clothsize) {
             $clothsize->quantities()->delete();
+
+            $product = Product::where('id', $clothsize->product_id)->first();
+            if (!$product->clothsize()->exists()) {
+                $product->delete();
+            }
         });
     }
 
