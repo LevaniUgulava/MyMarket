@@ -20,8 +20,8 @@ class AuthController extends Controller
             'password' => Hash::make($request->password)
         ]);
         $user->assignRole('default');
-        $user->notify(new RegisterNotification());
         $roles = $user->getRoleNames();
+
         $token = $user->createToken('api')->plainTextToken;
 
         return response()->json([

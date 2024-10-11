@@ -13,6 +13,7 @@ class CommentController extends Controller
     {
         $comment =  $product->commentusers()->get();
 
+
         $comment->map(function ($user) {
             return [
                 'name' => $user->name,

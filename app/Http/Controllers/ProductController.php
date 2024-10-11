@@ -32,9 +32,10 @@ class ProductController extends Controller
         $maincategoryid = $request->query('maincategory', '');
         $categoryid = $request->query('category', '');
         $subcategoryid = $request->query('subcategory', '');
+        $section = $request->query('section', '');
 
         $pagination = $request->get('perPage', 25);
-        $products = $this->productRepository->display($name, $maincategoryid, $categoryid, $subcategoryid, $pagination, $user);
+        $products = $this->productRepository->display($name, $maincategoryid, $categoryid, $subcategoryid, $pagination, $user, $section);
         return ProductResource::collection($products);
     }
 
@@ -42,9 +43,13 @@ class ProductController extends Controller
 
     public function admindisplay(Request $request)
     {
-        $pagination = $request->query('perPage', 10);
+        $name = $request->query('searchname', '');
+        $maincategoryid = $request->query('maincategory', '');
+        $categoryid = $request->query('category', '');
+        $subcategoryid = $request->query('subcategory', '');
+        $pagination = $request->query('perPage', 12);
 
-        $products = $this->productRepository->admindisplay($pagination);
+        $products = $this->productRepository->admindisplay($name, $maincategoryid, $categoryid, $subcategoryid, $pagination);
         return ProductResource::collection($products);
     }
 
@@ -61,7 +66,8 @@ class ProductController extends Controller
 
     public function displaybyid($id)
     {
-        $products = $this->productRepository->displaybyid($id);
+        $user = auth('sanctum')->user();
+        $products = $this->productRepository->displaybyid($id, $user);
         return ProductResource::collection($products);
     }
 

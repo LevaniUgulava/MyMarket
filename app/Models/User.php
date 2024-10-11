@@ -4,6 +4,8 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
+use App\Events\RegisterNotification as EventsRegisterNotification;
+use App\Notifications\RegisterNotification;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,6 +31,13 @@ class User extends Authenticatable
         'confirmation_token',
         'email_verified_at'
     ];
+
+    protected $dispatchesEvents = [
+        'created' => EventsRegisterNotification::class
+    ];
+
+
+
 
     /**
      * The attributes that should be hidden for serialization.
@@ -81,5 +90,20 @@ class User extends Authenticatable
             ->join('cart_item', 'cart.id', '=', 'cart_item.cart_id')
             ->join('products', 'products.id', '=', 'cart_item.product_id')
             ->select('products.*', 'cart_item.quantity', 'cart_item.retail_price', 'cart_item.size', 'cart_item.total_price');
+    }
+
+
+    public function Sitelogs()
+    {
+        return $this->hasMany(Sitelog::class)->wherehas('user', function ($query) {
+            $query->wherehas('roles', function ($q) {
+                $q->where('name', '!=', 'default');
+            });
+        });
+    }
+
+    public function rateuser()
+    {
+        return $this->hasMany(RateProduct::class, 'user_id');
     }
 }

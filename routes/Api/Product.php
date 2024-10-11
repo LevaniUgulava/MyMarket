@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\RateContorller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -22,14 +23,20 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 
 Route::get('/display', [ProductController::class, 'display']);
-Route::get('/admindisplay', [ProductController::class, 'admindisplay']);
 Route::get('/display/{id}', [ProductController::class, 'displaybyid']);
 Route::post('/Search', [ProductController::class, 'filterbyname']);
 Route::get('/Searchcategory/{id}', [ProductController::class, 'filterbycategory']);
-Route::post('/addproduct', [ProductController::class, 'create']);
-Route::post('/notactive/{id}', [ProductController::class, 'notactive']);
-Route::post('/active/{id}', [ProductController::class, 'active']);
-Route::post('/discount', [ProductController::class, 'discount']);
-Route::get('/discountproducts', [ProductController::class, 'discountproducts']);
+
+Route::group(['middleware' => ['auth:sanctum', 'adminpanel']], function () {
+    Route::get('/admindisplay', [ProductController::class, 'admindisplay']);
+    Route::post('/addproduct', [ProductController::class, 'create'])->middleware('auth:sanctum');
+    Route::post('/notactive/{id}', [ProductController::class, 'notactive']);
+    Route::post('/active/{id}', [ProductController::class, 'active']);
+    Route::post('/discount', [ProductController::class, 'discount']);
+    Route::get('/discountproducts', [ProductController::class, 'discountproducts']);
+});
+
+Route::post('/product/rate/{id}', [RateContorller::class, 'SendRate'])->middleware('auth:sanctum');
+
 
 Route::get('/getSizes', [ProductController::class, 'getSizes']);

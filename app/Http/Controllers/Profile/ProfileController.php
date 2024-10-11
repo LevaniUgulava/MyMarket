@@ -49,7 +49,7 @@ class ProfileController extends Controller
     public function likeproduct()
     {
         $user = Auth::user();
-        $products = $user->manyproducts()->get();
+        $products = $user->manyproducts()->withAvg('rateproduct', 'rate')->get();
         foreach ($products as $product) {
             $product->isLiked = true;
         }

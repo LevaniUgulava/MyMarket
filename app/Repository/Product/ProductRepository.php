@@ -21,16 +21,20 @@ use Illuminate\Support\Facades\Log;
 class ProductRepository implements ProductRepositoryInterface
 {
 
-    public function display($name, $maincategoryid, $categoryid, $subcategoryid, $pagination, $user)
+    public function display($name, $maincategoryid, $categoryid, $subcategoryid, $pagination, $user, $section)
     {
-        $products = Product::with('Maincategory', 'Category', 'Subcategory', 'user', 'clothsize.quantities', 'shoesize.quantities')
+        $products = Product::with('Maincategory', 'Category', 'Subcategory', 'clothsize.quantities', 'shoesize.quantities')
+            ->withAvg('rateproduct', 'rate')
             ->where('active', 1)
             ->searchname($name)
             ->searchmain($maincategoryid)
             ->searchcategory($categoryid)
             ->searchcategory($categoryid)
             ->searchsubcategory($subcategoryid)
+            ->section($section)
             ->paginate($pagination);
+
+
 
 
         $products->getCollection()->transform(function ($product) use ($user) {
@@ -40,6 +44,7 @@ class ProductRepository implements ProductRepositoryInterface
             });
 
             $product->isLiked = $user ? $user->manyproducts()->where('product_id', $product->id)->exists() : false;
+            $product->isRated = $user ? $user->rateuser()->where('product_id', $product->id)->exists() : false;
             return $product;
         });
 
@@ -48,10 +53,15 @@ class ProductRepository implements ProductRepositoryInterface
 
 
 
-    public function admindisplay($pagination)
+    public function admindisplay($name, $maincategoryid, $categoryid, $subcategoryid, $pagination)
     {
         $products = Product::with(['Maincategory', 'Category', 'Subcategory', 'user'])
-            ->paginate($pagination);
+            ->searchname($name)
+            ->searchmain($maincategoryid)
+            ->searchcategory($categoryid)
+            ->searchcategory($categoryid)
+            ->searchsubcategory($subcategoryid)
+            ->paginate($pagination);;
 
         $products->getCollection()->transform(function ($product) {
             $product->image_urls = $product->getMedia('default')->map(function ($media) {
@@ -83,9 +93,22 @@ class ProductRepository implements ProductRepositoryInterface
     }
 
 
-    public function displaybyid($id)
+    public function displaybyid($id, $user)
     {
-        $products = Product::with('Maincategory', 'Category', 'Subcategory', 'shoesize', 'clothsize')->where('id', $id)->get();
+        $products = Product::with('Maincategory', 'Category', 'Subcategory', 'shoesize', 'clothsize')
+            ->withAvg('rateproduct', 'rate')
+            ->where('id', $id)->get();
+
+        $products = $products->map(function ($product) use ($user) {
+
+            $product->isLiked = $user ? $user->manyproducts()->where('product_id', $product->id)->exists() : false;
+            $product->isRated = $user ? $user->rateuser()->where('product_id', $product->id)->exists() : false;
+            if ($product->isRated) {
+                $product->MyRate = $user->rateuser()->where('product_id', $product->id)->first()->rate;
+            }
+            return $product;
+        });
+
         return $products;
     }
     public function create(Request $request)
@@ -139,6 +162,7 @@ class ProductRepository implements ProductRepositoryInterface
             return true;
         } catch (\Exception $e) {
             Log::error('Product creation failed: ' . $e->getMessage());
+            dd($e->getMessage());
             return  false;
         }
     }

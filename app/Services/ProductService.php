@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Product;
+
 class ProductService
 {
     public function getClothsize($product, $size)
@@ -15,4 +17,6 @@ class ProductService
             }
         }
     }
+
+
 }

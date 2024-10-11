@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Events\RegisterNotification;
+use App\Events\Sitelog;
+use App\Listeners\RegisterNotificatinSend;
+use App\Listeners\SitelogAction;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -18,15 +22,15 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
+        RegisterNotification::class  => [
+            RegisterNotificatinSend::class,
+        ]
     ];
 
     /**
      * Register any events for your application.
      */
-    public function boot(): void
-    {
-        //
-    }
+    public function boot(): void {}
 
     /**
      * Determine if events and listeners should be automatically discovered.

@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use App\Enums\ProductSize;
+use App\Observers\ProductLoggerObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+
+#[ObservedBy([ProductLoggerObserver::class])]
 
 class Product extends Model implements HasMedia
 {
@@ -44,6 +48,15 @@ class Product extends Model implements HasMedia
     {
         if ($subcategoryid) {
             return $query->where('category_id', $subcategoryid);
+        }
+    }
+
+    public function scopeSection($query, $section)
+    {
+        if ($section === "all") {
+            return $query;
+        } elseif ($section === "discount") {
+            return $query->where('discount', '!=', 0);
         }
     }
 
@@ -101,5 +114,10 @@ class Product extends Model implements HasMedia
         return $this->belongsToMany(Order::class, 'order_item')
             ->withPivot('quantity', 'size', 'retail_price', 'total_price')
             ->withTimestamps();
+    }
+
+    public function rateproduct()
+    {
+        return $this->hasMany(RateProduct::class, 'product_id');
     }
 }

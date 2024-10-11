@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Ramsey\Uuid\Type\Decimal;
 
 class ProductResource extends JsonResource
 {
@@ -44,6 +45,10 @@ class ProductResource extends JsonResource
             }),
             'active' => $this->active,
             'isLiked' => $this->isLiked ?? false,
+            'isRated' => $this->isRated ?? false,
+            'Rate' => number_format((float)$this->rateproduct_avg_rate, 1),
+            'MyRate' => (float)$this->MyRate
+
         ];
     }
 }

@@ -18,7 +18,7 @@ class adminpanelmiddleware
     {
         if (Auth::check()) {
             $user = Auth::user();
-            if (!$user->hasRole('default')) {
+            if ($user->hasRole('admin')) {
                 return $next($request);
             }
         }
