@@ -13,7 +13,7 @@ class RolesRepository implements RolesRepositoryInterface
         $rolesWithUsers = [];
 
         foreach ($roles as $role) {
-            $users = $role->users->pluck('name', 'email');
+            $users = $role->users;
             $rolesWithUsers[$role->name] = $users;
         }
         return  $rolesWithUsers;

@@ -7,25 +7,14 @@ use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Models\User;
+use App\Notifications\CustomVerifyEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class ProfileController extends Controller
 {
-    // public function myproducts()
-    // {
-    //     $products = Product::with('Maincategory', 'Category', 'Subcategory', 'Contacts', 'user')
-    //         ->where('user_id', Auth::user()->id)->get();
-    //     return ProductResource::collection($products);
-    // }
-    // public function getprofile()
-    // {
-    //     $user = Auth::user();
-    //     return response()->json([
-    //         'message' => $user,
-    //     ]);
-    // }
+
 
     public function profile(Request $request)
     {
@@ -54,5 +43,11 @@ class ProfileController extends Controller
             $product->isLiked = true;
         }
         return ProductResource::collection($products);
+    }
+
+    public function resendverification()
+    {
+        $user = Auth::user();
+        $user->notify(new CustomVerifyEmail());
     }
 }

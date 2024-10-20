@@ -55,11 +55,11 @@ class ProductLoggerObserver
         $user = Auth::user();
 
         Sitelog::create([
-            'model' => Product::class,
+            'model' => "Product",
             'model_id' => $product->id,
             'user_id' => $user->id,
             'action' => $action,
-            'role' => $user->getRoleNames()
+            'role' => implode(', ', $user->getRoleNames()->toArray())
         ]);
     }
 }

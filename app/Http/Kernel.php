@@ -22,7 +22,6 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
-        \App\Http\Middleware\AddCorsHeaders::class,
 
     ];
 
@@ -58,7 +57,6 @@ class Kernel extends HttpKernel
      * @var array<string, class-string|string>
      */
     protected $middlewareAliases = [
-        'addCorsHeaders' => \App\Http\Middleware\AddCorsHeaders::class,
         'adminpanel' => \App\Http\Middleware\adminpanelmiddleware::class,
         'admin' => \App\Http\Middleware\Adminmiddleware::class,
         'editor' => \App\Http\Middleware\Editormiddleware::class,

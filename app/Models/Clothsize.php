@@ -19,7 +19,9 @@ class Clothsize extends Model
 
             $product = Product::where('id', $clothsize->product_id)->first();
             if (!$product->clothsize()->exists()) {
-                $product->delete();
+                $product->update([
+                    "active" => 0
+                ]);
             }
         });
     }

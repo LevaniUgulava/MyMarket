@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\User;
+use App\Notifications\CustomVerifyEmail;
 use App\Notifications\RegisterNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,15 +20,14 @@ class AuthController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password)
         ]);
+        $user->notify(new CustomVerifyEmail());
+
         $user->assignRole('default');
         $roles = $user->getRoleNames();
-
-        $token = $user->createToken('api')->plainTextToken;
 
         return response()->json([
             'message' => 'Registered',
             'id' => $user->id,
-            'token' => $token,
             'roles' => $roles
 
         ]);
@@ -79,5 +79,21 @@ class AuthController extends Controller
         $user = Auth::user();
         $user->currentAccessToken()->delete();
         return response()->json(['message' => 'Successfully logged out']);
+    }
+
+    public function verify($id)
+    {
+        // Find the user or throw a 404 if not found
+        $user = User::findOrFail($id);
+
+        // Check if the user has already been verified
+        if ($user->hasVerifiedEmail()) {
+            return response()->json(['message' => 'Email already verified.'], 200);
+        }
+
+        // Mark the user's email as verified
+        $user->markEmailAsVerified();
+
+        return response()->json(['message' => 'Email verified successfully!'], 200);
     }
 }

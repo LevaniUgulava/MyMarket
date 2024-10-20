@@ -54,10 +54,15 @@ class Product extends Model implements HasMedia
     public function scopeSection($query, $section)
     {
         if ($section === "all") {
-            return $query;
+            $query;
         } elseif ($section === "discount") {
-            return $query->where('discount', '!=', 0);
+            $query->where('discount', '!=', 0);
+        } elseif ($section === "highrate") {
+            $query
+                ->having('rateproduct_avg_rate', '!=', 0.0) // Use 'having' on the calculated average
+                ->orderBy('rateproduct_avg_rate', 'desc');
         }
+        return $query;
     }
 
 
