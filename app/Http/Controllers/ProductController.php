@@ -32,11 +32,16 @@ class ProductController extends Controller
         $maincategoryid = $request->query('maincategory', '');
         $categoryid = $request->query('category', '');
         $subcategoryid = $request->query('subcategory', '');
-        $section = $request->query('section', '');
-
+        $section = (array)$request->query('section', []);
+        $lang = $request->query('lang', '');
         $pagination = $request->get('perPage', 25);
-        $products = $this->productRepository->display($name, $maincategoryid, $categoryid, $subcategoryid, $pagination, $user, $section);
-        return ProductResource::collection($products);
+
+        $result = [];
+        foreach ($section as $s) {
+            $products = $this->productRepository->display($name, $maincategoryid, $categoryid, $subcategoryid, $pagination, $user, $s, $lang);
+            $result[$s] = ProductResource::collection($products);
+        }
+        return response()->json($result);
     }
 
 

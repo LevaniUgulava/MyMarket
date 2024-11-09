@@ -3,6 +3,7 @@
 namespace App\Repository\Product;
 
 use App\Enums\ProductSize;
+use App\Helpers\Translator;
 use App\Http\Requests\CreateProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Clothsize;
@@ -17,35 +18,37 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use LaravelLang\Translator\Facades\Translate;
 
 class ProductRepository implements ProductRepositoryInterface
 {
 
-    public function display($name, $maincategoryid, $categoryid, $subcategoryid, $pagination, $user, $section)
+    public function display($name, $maincategoryid, $categoryid, $subcategoryid, $pagination, $user, $section, $lang)
     {
-        $products = Product::with('Maincategory', 'Category', 'Subcategory', 'clothsize.quantities', 'shoesize.quantities')
-            ->withAvg('rateproduct', 'rate')
+
+        $products = Product::withAvg('rateproduct', 'rate')
+            ->with(['Maincategory', 'Category', 'Subcategory'])
+            ->when($name, fn($query) => $query->searchname($name))
+            ->when($maincategoryid, fn($query) => $query->searchmain($maincategoryid))
+            ->when($categoryid, fn($query) => $query->searchcategory($categoryid))
+            ->when($subcategoryid, fn($query) => $query->searchsubcategory($subcategoryid))
+            ->when($section, fn($query) => $query->section($section))
             ->where('active', 1)
-            ->searchname($name)
-            ->searchmain($maincategoryid)
-            ->searchcategory($categoryid)
-            ->searchcategory($categoryid)
-            ->searchsubcategory($subcategoryid)
-            ->section($section)
             ->paginate($pagination);
 
 
+        $likedProductIds = $user ? $user->manyproducts()->pluck('product_id')->toArray() : [];
+        $ratedProductIds = $user ? $user->rateuser()->pluck('product_id')->toArray() : [];
 
+        $products->getCollection()->transform(function ($product) use ($likedProductIds, $ratedProductIds, $lang) {
+            $product->image_urls = $product->getMedia('default')->map(fn($media) => $media->getUrl());
+            $product->isLiked = in_array($product->id, $likedProductIds);
+            $product->isRated = in_array($product->id, $ratedProductIds);
 
+            $cacheKeyDesc = "product_{$product->id}_description_{$lang}";
 
-        $products->getCollection()->transform(function ($product) use ($user) {
-            // Add image URLs from the media library
-            $product->image_urls = $product->getMedia('default')->map(function ($media) {
-                return $media->getUrl();
-            });
+            $product->description = Cache::remember($cacheKeyDesc, 60 * 60 * 24, fn() => Translator::translate($product->description, $lang));
 
-            $product->isLiked = $user ? $user->manyproducts()->where('product_id', $product->id)->exists() : false;
-            $product->isRated = $user ? $user->rateuser()->where('product_id', $product->id)->exists() : false;
             return $product;
         });
 
@@ -57,11 +60,10 @@ class ProductRepository implements ProductRepositoryInterface
     public function admindisplay($name, $maincategoryid, $categoryid, $subcategoryid, $pagination)
     {
         $products = Product::with(['Maincategory', 'Category', 'Subcategory', 'user'])
-            ->searchname($name)
-            ->searchmain($maincategoryid)
-            ->searchcategory($categoryid)
-            ->searchcategory($categoryid)
-            ->searchsubcategory($subcategoryid)
+            ->when($name, fn($query) => $query->searchname($name))
+            ->when($maincategoryid, fn($query) => $query->searchmain($maincategoryid))
+            ->when($categoryid, fn($query) => $query->searchcategory($categoryid))
+            ->when($subcategoryid, fn($query) => $query->searchsubcategory($subcategoryid))
             ->paginate($pagination);;
 
         $products->getCollection()->transform(function ($product) {
@@ -107,6 +109,9 @@ class ProductRepository implements ProductRepositoryInterface
             if ($product->isRated) {
                 $product->MyRate = $user->rateuser()->where('product_id', $product->id)->first()->rate;
             }
+            $product->name = Translator::translate($product->name, "ka");
+            $product->description = Translator::translate($product->description, "ka");
+
             return $product;
         });
 
