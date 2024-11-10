@@ -41,6 +41,7 @@ class RouteServiceProvider extends ServiceProvider
                 require base_path('routes/Api/Cart.php');
                 require base_path('routes/Api/Payment.php');
                 require base_path('routes/Api/Order.php');
+                require base_path('routes/Api/Collection.php');
             });
 
 
@@ -52,10 +53,10 @@ class RouteServiceProvider extends ServiceProvider
     protected function configureRateLimiting()
     {
         RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(60); 
+            return Limit::perMinute(60);
         });
         RateLimiter::for('global', function ($request) {
-            return Limit::perMinute(100); 
+            return Limit::perMinute(100);
         });
     }
 }

@@ -125,4 +125,9 @@ class Product extends Model implements HasMedia
     {
         return $this->hasMany(RateProduct::class, 'product_id');
     }
+
+    public function collections()
+    {
+        return $this->belongsToMany(Collection::class, 'collection_product')->withTimestamps();
+    }
 }
