@@ -23,7 +23,7 @@ use LaravelLang\Translator\Facades\Translate;
 class ProductRepository implements ProductRepositoryInterface
 {
 
-    public function display($name, $maincategoryid, $categoryid, $subcategoryid, $pagination, $user, $section, $lang)
+    public function display($name, $maincategoryid, $categoryid, $subcategoryid, $pagination, $user, $section, $lang, $price1, $price2)
     {
 
         $products = Product::withAvg('rateproduct', 'rate')
@@ -33,6 +33,7 @@ class ProductRepository implements ProductRepositoryInterface
             ->when($categoryid, fn($query) => $query->searchcategory($categoryid))
             ->when($subcategoryid, fn($query) => $query->searchsubcategory($subcategoryid))
             ->when($section, fn($query) => $query->section($section))
+            ->when($price1 || $price2, fn($query) => $query->price($price1, $price2))
             ->where('active', 1)
             ->paginate($pagination);
 
@@ -48,7 +49,6 @@ class ProductRepository implements ProductRepositoryInterface
             $cacheKeyDesc = "product_{$product->id}_description_{$lang}";
 
             $product->description = Cache::remember($cacheKeyDesc, 60 * 60 * 24, fn() => Translator::translate($product->description, $lang));
-
             return $product;
         });
 

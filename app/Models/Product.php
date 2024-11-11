@@ -7,6 +7,7 @@ use App\Observers\ProductLoggerObserver;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -59,8 +60,25 @@ class Product extends Model implements HasMedia
             $query->where('discount', '!=', 0);
         } elseif ($section === "highrate") {
             $query
-                ->having('rateproduct_avg_rate', '!=', 0.0) // Use 'having' on the calculated average
+                ->having('rateproduct_avg_rate', '!=', 0.0)
                 ->orderBy('rateproduct_avg_rate', 'desc');
+        }
+        return $query;
+    }
+    public function scopePrice($query, $price1, $price2)
+    {
+        if ($price1 && $price2) {
+            $query->whereBetween('discountprice', [$price1, $price2]);
+        } elseif ($price1) {
+            $max = Cache::remember('product_max_discountprice', 60, function () {
+                return Product::max('discountprice');
+            });
+            $query->whereBetween('discountprice', [$price1, $max]);
+        } elseif ($price2) {
+            $min = Cache::remember('product_min_discountprice', 60, function () {
+                return Product::min('discountprice');
+            });
+            $query->whereBetween('discountprice', [$min, $price2]);
         }
         return $query;
     }

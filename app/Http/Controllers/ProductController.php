@@ -34,11 +34,14 @@ class ProductController extends Controller
         $subcategoryid = $request->query('subcategory', '');
         $section = (array)$request->query('section', []);
         $lang = $request->query('lang', '');
+        $price1 = $request->query('min', '');
+        $price2 = $request->query('max', '');
+
         $pagination = $request->get('perPage', 25);
 
         $result = [];
         foreach ($section as $s) {
-            $products = $this->productRepository->display($name, $maincategoryid, $categoryid, $subcategoryid, $pagination, $user, $s, $lang);
+            $products = $this->productRepository->display($name, $maincategoryid, $categoryid, $subcategoryid, $pagination, $user, $s, $lang, $price1, $price2);
             $result[$s] = ProductResource::collection($products);
         }
         return response()->json($result);
