@@ -117,7 +117,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $this->loadMissing('userstatus');
 
-        $isEligible = $product->eligibleStatuses()->where('status', $this->userstatus->name)->exists();
+        $isEligible = $product->eligibleStatuses()->where('userstatus_id', $this->userstatus->id)->exists();
 
         if ($isEligible && $this->userstatus && $this->userstatus->discount > 0) {
             $discount = $this->userstatus->discount;

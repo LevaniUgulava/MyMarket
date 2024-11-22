@@ -151,6 +151,7 @@ class Product extends Model implements HasMedia
 
     public function eligibleStatuses()
     {
-        return $this->hasMany(Eligibleproduct::class);
+        return $this->belongsToMany(Userstatus::class, 'eligibleproducts', 'product_id', 'userstatus_id')
+            ->withPivot('userstatus_id');
     }
 }

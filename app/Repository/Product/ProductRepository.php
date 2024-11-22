@@ -33,8 +33,7 @@ class ProductRepository implements ProductRepositoryInterface
             $product->isLiked = in_array($product->id, $likedProductIds);
             $product->isRated = in_array($product->id, $ratedProductIds);
 
-            $isEligible = $user && $product->eligibleStatuses()->where('status', $user->userstatus->name)->exists();
-
+            $isEligible = $user && $product->eligibleStatuses()->wherePivot('userstatus_id', $user->userstatus->id)->exists();
             if ($isEligible) {
                 $product->discountstatus = $user->userstatus;
                 $product->discountstatusprice = $user->getPriceByStatus($product, $product->price, $product->price);

@@ -14,10 +14,11 @@ return new class extends Migration
         Schema::create('eligibleproducts', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('product_id');
-            $table->string('status');
+            $table->unsignedBigInteger('userstatus_id');
             $table->timestamps();
 
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+            $table->foreign('userstatus_id')->references('id')->on('userstatuses')->onDelete('cascade');
         });
     }
 
