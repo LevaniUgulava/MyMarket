@@ -53,9 +53,7 @@ class CartController extends Controller
     public function count(Product $product)
     {
         $countcomment =  $product->commentusers()->count();
-        $countlike = $product->users()->count();
         return response()->json([
-            'countlike' => $countlike,
             'liked' => true,
             'countcomment' => $countcomment
 
@@ -84,7 +82,7 @@ class CartController extends Controller
         $cartItem = $cart->products()->where('product_id', $product->id)->where('size', $request->size)->first();
         $quantity =  1;
         $size = $request->size ? $request->size : ProductSize::XS->value;
-        $totalPrice = $product->discountprice * $quantity;
+        $totalPrice = $user->getPriceByStatus($product, $product->price, $product->discountprice) * $quantity;
         if ($cartItem) {
             return response()->json(['message' => 'Product added Already']);
         } else {
@@ -92,7 +90,7 @@ class CartController extends Controller
             $cart->products()->attach($product->id, [
                 'quantity' => $quantity,
                 'size' => $size,
-                'retail_price' => $product->discountprice,
+                'retail_price' => $user->getPriceByStatus($product, $product->price, $product->discountprice),
                 'total_price' => $totalPrice
             ]);
             return response()->json(['message' => 'Product added to cart successfully']);
@@ -104,12 +102,15 @@ class CartController extends Controller
     {
         $user = Auth::user();
 
-        $products = $user->cartItems()->get()->map(function ($product) {
+        $products = $user->cartItems()->get()->map(function ($product) use ($user) {
             $productModel = Product::find($product->id);
 
             $product->image_urls = $productModel->getMedia('default')->map(function ($media) {
                 return  url('storage/' . $media->id . '/' . $media->file_name);
             });
+
+            $product->price = $user->getPriceByStatus($productModel, $product->price, $product->discountprice);
+
 
             return $product;
         });
@@ -146,7 +147,7 @@ class CartController extends Controller
                 return response()->json(['error' => 'Invalid action or quantity'], 400);
             }
 
-            $newTotalPrice = $data->discountprice * $currentquantity;
+            $newTotalPrice = $user->getPriceByStatus($product, $product->price, $product->discountprice) * $currentquantity;
 
             $updated = DB::table('cart_item')
                 ->where('cart_id', $cart->id)

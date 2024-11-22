@@ -42,7 +42,9 @@ class ProductController extends Controller
         $result = [];
         foreach ($section as $s) {
             $products = $this->productRepository->display($name, $maincategoryid, $categoryid, $subcategoryid, $pagination, $user, $s, $lang, $price1, $price2);
-            $result[$s] = ProductResource::collection($products);
+            $result[$s] = $products->map(function ($product) use ($user) {
+                return new ProductResource($product, $user);
+            });
         }
         return response()->json($result);
     }

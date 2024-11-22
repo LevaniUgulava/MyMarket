@@ -17,11 +17,14 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('facebook_id')->nullable();
             $table->string('google_id')->nullable();
+            $table->unsignedBigInteger('userstatus_id')->nullable();
             $table->string('confirmation_token')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->nullable();
             $table->rememberToken();
             $table->timestamps();
+
+            $table->foreign('userstatus_id')->references('id')->on('userstatuses')->onDelete('set null');
         });
     }
 

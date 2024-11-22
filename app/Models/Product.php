@@ -148,4 +148,9 @@ class Product extends Model implements HasMedia
     {
         return $this->belongsToMany(Collection::class, 'collection_product')->withTimestamps();
     }
+
+    public function eligibleStatuses()
+    {
+        return $this->hasMany(Eligibleproduct::class);
+    }
 }

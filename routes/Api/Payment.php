@@ -22,4 +22,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 
-Route::get('/checkout', [PaymentController::class, 'checkout'])->middleware('auth:sanctum');
+Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+    Route::get('/checkout', [PaymentController::class, 'checkout']);
+});

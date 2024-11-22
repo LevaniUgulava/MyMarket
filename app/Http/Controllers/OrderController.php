@@ -28,6 +28,7 @@ class OrderController extends Controller
             return $order;
         });
         $groupedOrders = [];
+        $groupedStatus = [];
         foreach ($orders as $order) {
             $products = [];
 
@@ -48,9 +49,11 @@ class OrderController extends Controller
                 'order_status' => $order->status,
                 'products' => $products
             ];
+
+            $groupedStatus[$order->status][] = end($groupedOrders);
         }
 
-        return response()->json($groupedOrders);
+        return response()->json($groupedStatus);
     }
 
     public function getadminorder()

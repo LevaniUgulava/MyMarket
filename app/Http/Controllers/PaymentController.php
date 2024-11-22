@@ -2,16 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Status;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Quantity;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PaymentController extends Controller
 {
+    protected $discountController;
+
+
+    public function __construct(DiscountController $discountController)
+    {
+        $this->discountController = $discountController;
+    }
+
     public function checkout()
     {
         $user = Auth::user();
@@ -30,8 +40,10 @@ class PaymentController extends Controller
         $order = Order::create([
             'user_id' => $user->id,
             'amount_paid' => $price,
-            'status' => 'completed'
+            'status' => Status::Pending
         ]);
+        $this->updatetotalspent($user, $price);
+        $this->discountController->updateStatus($user);
 
         if ($order) {
             foreach ($gets as $item) {
@@ -54,6 +66,12 @@ class PaymentController extends Controller
 
             return response()->json($i);
         }
+    }
+
+    public function updatetotalspent($user, $price)
+    {
+        $user->total_spent += $price;
+        $user->save();
     }
 
     private function managequantity($id, $size, $quantity)

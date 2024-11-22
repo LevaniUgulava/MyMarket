@@ -2,32 +2,20 @@
 
 namespace App\Repository\Product;
 
-use App\Enums\ProductSize;
 use App\Helpers\Translator;
-use App\Http\Requests\CreateProductRequest;
-use App\Http\Resources\ProductResource;
 use App\Models\Clothsize;
-use Illuminate\Support\Str;
-
 use App\Models\Product;
 use App\Models\Shoessize;
-use App\Models\User;
-use Barryvdh\Debugbar\Facades\Debugbar;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use LaravelLang\Translator\Facades\Translate;
 
 class ProductRepository implements ProductRepositoryInterface
 {
-
     public function display($name, $maincategoryid, $categoryid, $subcategoryid, $pagination, $user, $section, $lang, $price1, $price2)
     {
-
         $products = Product::withAvg('rateproduct', 'rate')
-            ->with(['Maincategory', 'Category', 'Subcategory'])
+            ->with(['Maincategory', 'Category', 'Subcategory', 'eligibleStatuses'])
             ->when($name, fn($query) => $query->searchname($name))
             ->when($maincategoryid, fn($query) => $query->searchmain($maincategoryid))
             ->when($categoryid, fn($query) => $query->searchcategory($categoryid))
@@ -37,18 +25,27 @@ class ProductRepository implements ProductRepositoryInterface
             ->where('active', 1)
             ->paginate($pagination);
 
-
         $likedProductIds = $user ? $user->manyproducts()->pluck('product_id')->toArray() : [];
         $ratedProductIds = $user ? $user->rateuser()->pluck('product_id')->toArray() : [];
 
-        $products->getCollection()->transform(function ($product) use ($likedProductIds, $ratedProductIds, $lang) {
+        $products->getCollection()->transform(function ($product) use ($likedProductIds, $ratedProductIds, $lang, $user) {
             $product->image_urls = $product->getMedia('default')->map(fn($media) => $media->getUrl());
             $product->isLiked = in_array($product->id, $likedProductIds);
             $product->isRated = in_array($product->id, $ratedProductIds);
 
-            $cacheKeyDesc = "product_{$product->id}_description_{$lang}";
+            $isEligible = $user && $product->eligibleStatuses()->where('status', $user->userstatus->name)->exists();
 
+            if ($isEligible) {
+                $product->discountstatus = $user->userstatus;
+                $product->discountstatusprice = $user->getPriceByStatus($product, $product->price, $product->price);
+            } else {
+                $product->discountstatus = null;
+                $product->discountstatusprice = $product->discountprice;
+            }
+
+            $cacheKeyDesc = "product_{$product->id}_description_{$lang}";
             $product->description = Cache::remember($cacheKeyDesc, 60 * 60 * 24, fn() => Translator::translate($product->description, $lang));
+
             return $product;
         });
 

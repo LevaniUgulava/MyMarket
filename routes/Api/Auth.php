@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FacebookController;
 use App\Http\Controllers\GoogleController;
 use App\Models\User;
+use Google\Service\Compute\Router;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -38,3 +39,6 @@ Route::post('google/callback', [GoogleController::class, 'callback']);
 
 
 Route::get('/email/verify/{id}', [AuthController::class, 'verify'])->middleware(['signed'])->name("verification.verify");
+
+
+Route::get('/userstatuses', [AuthController::class, 'getuserstatus'])->middleware('auth:sanctum');

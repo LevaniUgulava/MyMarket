@@ -42,7 +42,7 @@ class CustomVerifyEmail extends Notification
             ['id' => $notifiable->getKey()]
         );
 
-        $frontendUrl = 'http://localhost:8080/email-verify/' . $notifiable->getKey() . '?' . parse_url($temporarySignedUrl, PHP_URL_QUERY);
+        $frontendUrl = 'http://localhost:8080/ka/email-verify/' . $notifiable->getKey() . '?' . parse_url($temporarySignedUrl, PHP_URL_QUERY);
 
         return (new MailMessage)
             ->line('The introduction to the notification.')

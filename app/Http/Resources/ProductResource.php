@@ -3,12 +3,22 @@
 namespace App\Http\Resources;
 
 use App\Helpers\Translator;
+use App\Http\Controllers\DiscountController;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Auth;
 use Ramsey\Uuid\Type\Decimal;
 
 class ProductResource extends JsonResource
 {
+    protected $user;
+
+    public function __construct($resource, $user = null)
+    {
+        parent::__construct($resource);
+        $this->user = $user;
+    }
+
     /**
      * Transform the resource into an array.
      *
@@ -16,6 +26,7 @@ class ProductResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -37,7 +48,8 @@ class ProductResource extends JsonResource
                     })
                     : null),
             'discount' => $this->discount,
-            'discountprice' => $this->discountprice,
+            'discountstatus' => $this->discountstatus,
+            'discountprice' => $this->discountstatusprice,
             'MainCategory' => $this->MainCategory->name,
             'Category' => $this->Category->name,
             'SubCategory' => $this->Subcategory->name,

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\User;
+use App\Models\Userstatus;
 use App\Notifications\CustomVerifyEmail;
 use App\Notifications\RegisterNotification;
 use Illuminate\Http\Request;
@@ -40,7 +41,7 @@ class AuthController extends Controller
                 'message' => 'Invalid email or password',
             ], 401);
         }
-
+        $status = $user->userstatus->name;
 
         $token = $user->createToken('api', [], now()->addDays(3))->plainTextToken;
         $roles = $user->getRoleNames();
@@ -48,7 +49,9 @@ class AuthController extends Controller
             'id' => $user->id,
             'name' => $user->name,
             'token' => $token,
-            'roles' => $roles
+            'roles' => $roles,
+            'status' => $status,
+            'total_spent' => $user->total_spent
         ]);
     }
 
@@ -83,17 +86,43 @@ class AuthController extends Controller
 
     public function verify($id)
     {
-        // Find the user or throw a 404 if not found
         $user = User::findOrFail($id);
 
-        // Check if the user has already been verified
         if ($user->hasVerifiedEmail()) {
             return response()->json(['message' => 'Email already verified.'], 200);
         }
 
-        // Mark the user's email as verified
         $user->markEmailAsVerified();
 
         return response()->json(['message' => 'Email verified successfully!'], 200);
+    }
+
+    public function getuserstatus()
+    {
+        $user = Auth::user();
+        $userstatus = $user->userstatus;
+        $statuses = Userstatus::orderby('toachieve')->get();
+
+        $result = [];
+        for ($i = 0; $i < count($statuses); $i++) {
+            if (
+                $user->total_spent >= $statuses[$i]->toachieve &&
+                isset($statuses[$i + 1]) &&
+                $user->total_spent <= $statuses[$i + 1]->toachieve
+            ) {
+                $result = [
+                    'current' => $statuses[$i]->name,
+                    'next' => $statuses[$i + 1]->name,
+                ];
+                break;
+            }
+        }
+
+        return response()->json([
+            'status' => $userstatus,
+            'user' => $user->total_spent,
+            'result' => $result
+
+        ]);
     }
 }

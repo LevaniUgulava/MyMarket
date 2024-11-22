@@ -108,4 +108,22 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(RateProduct::class, 'user_id');
     }
+
+    public function userstatus()
+    {
+        return $this->belongsTo(Userstatus::class);
+    }
+    public function getPriceByStatus($product, $price, $defaultPrice)
+    {
+        $this->loadMissing('userstatus');
+
+        $isEligible = $product->eligibleStatuses()->where('status', $this->userstatus->name)->exists();
+
+        if ($isEligible && $this->userstatus && $this->userstatus->discount > 0) {
+            $discount = $this->userstatus->discount;
+            return $price * (1 - ($discount / 100));
+        }
+
+        return $defaultPrice;
+    }
 }
