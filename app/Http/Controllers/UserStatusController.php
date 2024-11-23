@@ -37,4 +37,9 @@ class UserStatusController extends Controller
         $result = $this->userStatusRepository->delete($id);
         return $result;
     }
+    public function StatuswithUser($id)
+    {
+        $result = $this->userStatusRepository->StatuswithUser($id);
+        return $result;
+    }
 }
