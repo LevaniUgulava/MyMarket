@@ -10,7 +10,7 @@ class UserStatusRepository implements UserStatusRepositoryInterface
     public function display()
     {
         try {
-            $status = Userstatus::with('Users')->get();
+            $status = Userstatus::all();
             return response()->json([
                 'statuses' => $status
             ]);
@@ -50,6 +50,20 @@ class UserStatusRepository implements UserStatusRepositoryInterface
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to delete status',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    public function StatuswithUser($id)
+    {
+        try {
+            $status = Userstatus::with('Users')->findorfail($id);
+            return response()->json([
+                'status' => $status,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to get status',
                 'error' => $e->getMessage(),
             ], 500);
         }

@@ -29,4 +29,5 @@ Route::group(['middleware' => ['auth:sanctum', 'admin', 'adminpanel'], 'prefix' 
     Route::get('/display', [UserStatusController::class, 'display']);
     Route::post('/create', [UserStatusController::class, 'store']);
     Route::post('/delete/{id}', [UserStatusController::class, 'delete']);
+    Route::get('/{id}', [UserStatusController::class, 'StatuswithUser']);
 });
