@@ -15,8 +15,8 @@ class Userstatus extends Model
         return $this->hasMany(User::class);
     }
 
-    public function eligibleStatuses()
+    public function eligibleProducts()
     {
-        return $this->belongsToMany(Eligibleproduct::class, 'eligibleproducts', 'userstatus_id');
+        return $this->belongsToMany(Product::class, 'eligibleproducts', 'userstatus_id', 'product_id');
     }
 }

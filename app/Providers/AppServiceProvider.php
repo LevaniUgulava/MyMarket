@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Models\Product;
 use App\Observers\GlobalObserver;
 use App\Observers\ProductLoggerObserver;
+use App\Repository\EligibleProduct\EligibleProductRepository;
+use App\Repository\EligibleProduct\EligibleProductRepositoryInterface;
 use App\Repository\Product\ProductRepository;
 use App\Repository\Product\ProductRepositoryInterface;
 use App\Repository\Roles\RolesRepository;
@@ -25,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ProductRepositoryInterface::class, ProductRepository::class);
         $this->app->singleton(RolesRepositoryInterface::class, RolesRepository::class);
         $this->app->singleton(UserStatusRepositoryInterface::class, UserStatusRepository::class);
+        $this->app->singleton(EligibleProductRepositoryInterface::class, EligibleProductRepository::class);
     }
 
     /**

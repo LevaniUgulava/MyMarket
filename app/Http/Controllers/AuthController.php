@@ -103,25 +103,10 @@ class AuthController extends Controller
         $userstatus = $user->userstatus;
         $statuses = Userstatus::orderby('toachieve')->get();
 
-        $result = [];
-        for ($i = 0; $i < count($statuses); $i++) {
-            if (
-                $user->total_spent >= $statuses[$i]->toachieve &&
-                isset($statuses[$i + 1]) &&
-                $user->total_spent <= $statuses[$i + 1]->toachieve
-            ) {
-                $result = [
-                    'current' => $statuses[$i]->name,
-                    'next' => $statuses[$i + 1]->name,
-                ];
-                break;
-            }
-        }
-
         return response()->json([
             'status' => $userstatus,
             'user' => $user->total_spent,
-            'result' => $result
+            'statuses' => $statuses
 
         ]);
     }

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\RolesController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\EligibleProductController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UserStatusController;
 use App\Models\Userstatus;
@@ -25,9 +26,16 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 
-Route::group(['middleware' => ['auth:sanctum', 'admin', 'adminpanel'], 'prefix' => '/admin/userstatus'], function () {
-    Route::get('/display', [UserStatusController::class, 'display']);
-    Route::post('/create', [UserStatusController::class, 'store']);
-    Route::post('/delete/{id}', [UserStatusController::class, 'delete']);
-    Route::get('/{id}', [UserStatusController::class, 'StatuswithUser']);
+Route::group(['middleware' => ['auth:sanctum', 'admin', 'adminpanel'], 'prefix' => '/admin'], function () {
+    Route::group(['prefix' => '/userstatus'], function () {
+        Route::get('/display', [UserStatusController::class, 'display']);
+        Route::post('/create', [UserStatusController::class, 'store']);
+        Route::post('/delete/{id}', [UserStatusController::class, 'delete']);
+        Route::get('/{id}', [UserStatusController::class, 'StatuswithUser']);
+    });
+    Route::group(['prefix' => '/eligible'], function () {
+        Route::get('/display/{id}', [EligibleProductController::class, 'display']);
+        Route::post('/create/{id}', [EligibleProductController::class, 'create']);
+        Route::post('/delete/{id}', [EligibleProductController::class, 'delete']);
+    });
 });
