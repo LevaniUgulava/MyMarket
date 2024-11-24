@@ -8,15 +8,17 @@ use Illuminate\Support\Facades\Auth;
 
 class DiscountController extends Controller
 {
-    public function updateStatus($user)
+    public function updateStatus($user, $totalspent)
     {
-        $status = Userstatus::where('toachieve', '<=', $user->total_spent)
+        $status = Userstatus::where('toachieve', '<=', $totalspent)
             ->orderBy('toachieve', 'desc')
             ->first();
 
+
         if ($status && $status->id !== $user->userstatus_id) {
-            $user->userstatus_id = $status->id;
-            $user->save();
+            $user->update([
+                'userstatus_id' => $status->id
+            ]);
         }
     }
 }

@@ -42,8 +42,8 @@ class PaymentController extends Controller
             'amount_paid' => $price,
             'status' => Status::Pending
         ]);
-        $this->updatetotalspent($user, $price);
-        $this->discountController->updateStatus($user);
+        $totalspent = $this->updatetotalspent($user, $price);
+        $this->discountController->updateStatus($user, $totalspent);
 
         if ($order) {
             foreach ($gets as $item) {
@@ -72,6 +72,7 @@ class PaymentController extends Controller
     {
         $user->total_spent += $price;
         $user->save();
+        return $user->total_spent;
     }
 
     private function managequantity($id, $size, $quantity)

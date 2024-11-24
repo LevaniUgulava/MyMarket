@@ -31,7 +31,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'google_id',
         'confirmation_token',
-        'email_verified_at'
+        'email_verified_at',
+        'userstatus_id'
+
     ];
 
     protected $dispatchesEvents = [
