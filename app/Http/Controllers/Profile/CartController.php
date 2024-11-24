@@ -79,9 +79,13 @@ class CartController extends Controller
             $cart = $existingCart;
         }
 
+        $productexistsizes = $product->clothsize;
+        $existsize = $productexistsizes->pluck('size')->toArray();
+        $randomSize = $existsize[array_rand($existsize)];
+
         $cartItem = $cart->products()->where('product_id', $product->id)->where('size', $request->size)->first();
         $quantity =  1;
-        $size = $request->size ? $request->size : ProductSize::XS->value;
+        $size = $request->size ? $request->size : $randomSize;
         $totalPrice = $user->getPriceByStatus($product, $product->price, $product->discountprice) * $quantity;
         if ($cartItem) {
             return response()->json(['message' => 'Product added Already']);

@@ -123,9 +123,9 @@ class User extends Authenticatable implements MustVerifyEmail
 
         if ($isEligible && $this->userstatus && $this->userstatus->discount > 0) {
             $discount = $this->userstatus->discount;
-            return $price * (1 - ($discount / 100));
+            return round($price * (1 - ($discount / 100)), 2);
         }
 
-        return $defaultPrice;
+        return round($defaultPrice, 2);
     }
 }
