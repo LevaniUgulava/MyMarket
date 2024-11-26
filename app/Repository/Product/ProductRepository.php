@@ -96,23 +96,32 @@ class ProductRepository implements ProductRepositoryInterface
     {
         $products = Product::with('Maincategory', 'Category', 'Subcategory', 'shoesize', 'clothsize')
             ->withAvg('rateproduct', 'rate')
-            ->where('id', $id)->get();
-
+            ->where('id', $id)
+            ->get();
         $products = $products->map(function ($product) use ($user) {
+            $product->image_urls = $product->getMedia('default')->map(fn($media) => $media->getUrl());
 
-            $product->isLiked = $user ? $user->manyproducts()->where('product_id', $product->id)->exists() : false;
-            $product->isRated = $user ? $user->rateuser()->where('product_id', $product->id)->exists() : false;
-            if ($product->isRated) {
+            if ($product->isRated && $user) {
                 $product->MyRate = $user->rateuser()->where('product_id', $product->id)->first()->rate;
+            } else {
+                $product->MyRate = null;
             }
-            $product->name = Translator::translate($product->name, "ka");
             $product->description = Translator::translate($product->description, "ka");
+            $isEligible = $user && $product->eligibleStatuses()->wherePivot('userstatus_id', $user->userstatus->id)->exists();
+            if ($isEligible) {
+                $product->discountstatus = $user->userstatus;
+                $product->discountstatusprice = $user->getPriceByStatus($product, $product->price, $product->price);
+            } else {
+                $product->discountstatus = null;
+                $product->discountstatusprice = $product->discountprice;
+            }
 
             return $product;
         });
 
         return $products;
     }
+
     public function create(Request $request)
     {
 

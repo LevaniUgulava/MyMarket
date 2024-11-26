@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Status;
+use App\Helpers\EnumHelper;
 use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Symfony\Component\CssSelector\Node\FunctionNode;
 
 class OrderController extends Controller
@@ -58,7 +61,8 @@ class OrderController extends Controller
 
     public function getadminorder()
     {
-        $orders = Order::with('user')->get()->map(function ($order) {
+
+        $orders = Order::with('user')->orderby('created_at', 'desc')->get()->map(function ($order) {
 
             $order->products = $order->products->map(function ($product) {
                 $productModel = Product::find($product->id);
@@ -96,6 +100,34 @@ class OrderController extends Controller
             ];
         }
 
-        return response()->json($groupedOrders);
+        return response()->json([
+            'orders' => $groupedOrders,
+        ]);
+    }
+
+
+
+    public function orderstatus(Request $request)
+    {
+        $status = $request->input('status');
+        $ids = $request->input('id');
+        Order::whereIn('id', $ids)->update(['status' => $status]);
+        return response()->json(['message' => 'Order statuses updated successfully'], 200);
+    }
+    public function singleadminorder($id)
+    {
+        $order = Order::with('user', 'products')->orderBy('created_at', 'desc')->findOrFail($id);
+
+        $order->products = $order->products->map(function ($product) {
+            $product->image_urls = $product->getMedia('default')->map(function ($media) {
+                return url('storage/' . $media->id . '/' . $media->file_name);
+            });
+
+            return $product;
+        });
+
+        return response()->json([
+            'order' => $order,
+        ]);
     }
 }
