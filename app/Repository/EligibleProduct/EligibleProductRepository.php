@@ -30,7 +30,7 @@ class EligibleProductRepository implements EligibleProductRepositoryInterface
     }
 
 
-    public function create($statusid, array $ids)
+    public function create($statusid, array $ids, $discount)
     {
 
         try {
@@ -41,7 +41,7 @@ class EligibleProductRepository implements EligibleProductRepositoryInterface
                 ]);
             }
             foreach ($ids as $id) {
-                $userStatus->eligibleProducts()->attach($id);
+                $userStatus->eligibleProducts()->attach($id, ['discount' => $discount]);
             }
             return response()->json([
                 'message' => "Added succesfully"

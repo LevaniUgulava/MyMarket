@@ -119,10 +119,9 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $this->loadMissing('userstatus');
 
-        $isEligible = $product->eligibleStatuses()->where('userstatus_id', $this->userstatus->id)->exists();
-
-        if ($isEligible && $this->userstatus && $this->userstatus->discount > 0) {
-            $discount = $this->userstatus->discount;
+        $isEligible = $product->eligibleStatuses()->where('userstatus_id', $this->userstatus->id)->withPivot('discount')->first();
+        if ($isEligible && $this->userstatus && $isEligible->pivot->discount > 0) {
+            $discount = $isEligible->pivot->discount;
             return round($price * (1 - ($discount / 100)), 2);
         }
 

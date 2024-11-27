@@ -20,12 +20,19 @@ class EligibleProductController extends Controller
     }
     public function create($id, Request $request)
     {
-        $data = $request->validate([
-            'id' => 'required|array'
+        $request->validate([
+            'ids' => 'required|array',
+            'discount' => 'required|numeric|between:0,100'
         ]);
-        $result = $this->eligibleproductrepository->create($id, $data);
-        return $result;
+
+        $ids = $request->input('ids');
+        $discount = $request->input('discount');
+
+        $result = $this->eligibleproductrepository->create($id, $ids, $discount);
+
+        return response()->json($result, 200);
     }
+
     public function delete($id, Request $request)
     {
         $data = $request->validate([

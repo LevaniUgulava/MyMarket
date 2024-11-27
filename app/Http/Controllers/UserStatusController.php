@@ -24,7 +24,6 @@ class UserStatusController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'toachieve' => 'required|numeric|min:0',
-            'discount' => 'required|integer|between:1,100',
         ]);
 
         $result = $this->userStatusRepository->create($data);

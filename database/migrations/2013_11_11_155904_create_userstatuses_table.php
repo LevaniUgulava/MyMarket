@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->decimal('toachieve', 10, 2);
-            $table->integer('discount')->default(0);
             $table->timestamps();
         });
     }
