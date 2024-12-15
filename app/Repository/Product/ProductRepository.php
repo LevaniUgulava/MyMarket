@@ -33,21 +33,25 @@ class ProductRepository implements ProductRepositoryInterface
             $product->isLiked = in_array($product->id, $likedProductIds);
             $product->isRated = in_array($product->id, $ratedProductIds);
 
-            $isEligible =  $product->eligibleStatuses()->wherePivot('userstatus_id', $user->userstatus->id)->withPivot('discount')->first();
-            if ($isEligible) {
-                $product->discountstatus = [
-                    'userstatus' => $user->userstatus,
-                    'discount' => $isEligible->pivot->discount
-                ];
-                $product->discountstatusprice = $user->getPriceByStatus($product, $product->price, $product->price);
+            if ($user) {
+                $isEligible =  $product->eligibleStatuses()->wherePivot('userstatus_id', $user->userstatus->id)->withPivot('discount')->first();
+                if ($isEligible) {
+                    $product->discountstatus = [
+                        'userstatus' => $user->userstatus,
+                        'discount' => $isEligible->pivot->discount
+                    ];
+                    $product->discountstatusprice = $user->getPriceByStatus($product, $product->price, $product->price);
+                } else {
+                    $product->discountstatus = null;
+                    $product->discountstatusprice = $product->discountprice;
+                }
             } else {
                 $product->discountstatus = null;
                 $product->discountstatusprice = $product->discountprice;
             }
 
-            $cacheKeyDesc = "product_{$product->id}_description_{$lang}";
-            $product->description = Cache::remember($cacheKeyDesc, 60 * 60 * 24, fn() => Translator::translate($product->description, $lang));
-
+            // $cacheKeyDesc = "product_{$product->id}_description_{$lang}";
+            // $product->description = Cache::remember($cacheKeyDesc, 60 * 60 * 24, fn() => Translator::translate($product->description, $lang));
             return $product;
         });
 

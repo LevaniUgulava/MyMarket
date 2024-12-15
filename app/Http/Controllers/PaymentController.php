@@ -22,10 +22,16 @@ class PaymentController extends Controller
         $this->discountController = $discountController;
     }
 
-    public function checkout()
+    public function checkout(Request $request)
     {
+        $request->validate([
+            'address' => 'required|string|max:100',
+            'phone' => 'nullable|regex:/^[1-9][0-9]{8}$/',
+        ]);
+        $address = $request->input('address');
+        $number = $request->input('phone');
         $user = Auth::user();
-
+        $this->UpdatePhone($user, $number);
         $cart = $user->carts()->latest()->first();
 
         if (!$cart) {
@@ -40,7 +46,8 @@ class PaymentController extends Controller
         $order = Order::create([
             'user_id' => $user->id,
             'amount_paid' => $price,
-            'status' => Status::Pending
+            'status' => Status::Pending,
+            'address' => $address
         ]);
         $totalspent = $this->updatetotalspent($user, $price);
         $this->discountController->updateStatus($user, $totalspent);
@@ -68,12 +75,25 @@ class PaymentController extends Controller
         }
     }
 
-    public function updatetotalspent($user, $price)
+    private function updatetotalspent($user, $price)
     {
         $user->total_spent += $price;
         $user->save();
         return $user->total_spent;
     }
+
+    private function UpdatePhone($user, $number)
+    {
+        $user->update([
+            'phone_number' => $number
+        ]);
+    }
+
+
+
+
+
+
 
     private function managequantity($id, $size, $quantity)
     {

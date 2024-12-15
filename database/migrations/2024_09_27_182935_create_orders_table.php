@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->decimal('amount_paid', 10, 2);
+            $table->string('address');
             $table->string('status');
             $table->timestamps();
         });
