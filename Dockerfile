@@ -1,22 +1,27 @@
-FROM php:8.2-apache
+FROM php:8.2-fpm
 
 RUN apt-get update && apt-get install -y \
-    libzip-dev unzip git libexif-dev && \
-    docker-php-ext-install pdo_mysql zip bcmath exif && \
-    a2enmod rewrite
+    git \
+    unzip \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libzip-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd pdo_mysql zip \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/backend
 
-COPY ./000-default.conf /etc/apache2/sites-available/000-default.conf
+COPY . /var/www/backend
 
-COPY . .
+RUN chown -R www-data:www-data /var/www/backend \
+    && chmod -R 755 /var/www/backend
 
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
-    composer install --no-dev --prefer-dist --optimize-autoloader
+EXPOSE 9000
 
-RUN chown -R www-data:www-data storage bootstrap/cache && \
-    chmod -R 775 storage bootstrap/cache
-
-EXPOSE 80
-
-CMD ["apache2-foreground"]
+CMD ["php-fpm"]

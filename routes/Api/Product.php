@@ -22,6 +22,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 
+
 Route::get('/display', [ProductController::class, 'display']);
 Route::get('/display/{id}', [ProductController::class, 'displaybyid']);
 Route::post('/Search', [ProductController::class, 'filterbyname']);
