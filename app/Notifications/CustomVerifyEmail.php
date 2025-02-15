@@ -46,7 +46,7 @@ class CustomVerifyEmail extends Notification
 
         return (new MailMessage)
             ->line('The introduction to the notification.')
-            ->action('Notification Action', $frontendUrl)
+            ->action('Verification', $frontendUrl)
             ->line('Thank you for using our application!');
     }
 

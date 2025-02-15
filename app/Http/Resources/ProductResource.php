@@ -32,6 +32,7 @@ class ProductResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
             'price' => $this->price,
+            'size_type' => $this->size_type,
             'size' => $this->clothsize->isNotEmpty()
                 ? $this->clothsize->map(function ($size) {
                     return [
@@ -49,7 +50,7 @@ class ProductResource extends JsonResource
                     : null),
             'discount' => $this->discount,
             'discountstatus' => $this->discountstatus,
-            'discountprice' => $this->discountstatusprice,
+            'discountprice' => $this->discountprice,
             'MainCategory' => $this->MainCategory->name,
             'Category' => $this->Category->name,
             'SubCategory' => $this->Subcategory->name,

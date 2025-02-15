@@ -23,8 +23,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::group(['middleware' => 'auth:sanctum'], function () {
-    Route::post('/profile/update', [ProfileController::class, 'profile']);
-    Route::get('/profile', [ProfileController::class, 'getprofile']);
+    Route::post('/profile/update', [ProfileController::class, 'Updateprofile']);
+    Route::post('/profile/update/password', [ProfileController::class, 'Updatepassword']);
+    Route::get('/getprofile', [ProfileController::class, 'getprofile']);
     Route::get('/likeproduct', [ProfileController::class, 'likeproduct']);
     Route::post('/resend/verification', [ProfileController::class, 'resendverification']);
 
@@ -36,7 +37,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
 
 
-
     Route::post('/products/addcart/{id}', [CartController::class, 'addcart']);
     Route::get('/products/totalmount', [CartController::class, 'full']);
 });
+Route::post('/forget/password', [ProfileController::class, 'ResetPassword']);
+Route::post('/reset/password/{id}', [ProfileController::class, 'ForgotPassword']);

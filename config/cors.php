@@ -16,7 +16,7 @@ return [
     */
 
     'paths' => ['api/*'],
-    'allowed_origins' => ['http://localhost:8080'],
+    'allowed_origins' => ['*'],
     'allowed_methods' => ['*'],
     'allowed_headers' => ['*'],
     'exposed_headers' => false,

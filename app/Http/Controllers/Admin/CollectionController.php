@@ -7,6 +7,7 @@ use App\Http\Resources\ProductResource;
 use App\Models\Collection;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CollectionController extends Controller
 {
@@ -46,9 +47,49 @@ class CollectionController extends Controller
         $collection->delete();
         return response()->json(['message' => 'Collection deleted successfully']);
     }
+
     public function singlecollection(Collection $collection)
     {
-        $collection->load('products');
+        $user = auth('sanctum')->user();
+        $likedProductIds = $user ? $user->manyproducts()->pluck('product_id')->toArray() : [];
+        $collection->load([
+            'products' => function ($query) {
+                $query->withAvg('rateproduct', 'rate');
+            }
+        ]);
+
+        $collection->products->transform(function ($product) use ($likedProductIds, $user) {
+            $product->image_urls = $product->getMedia('default')->map(fn($media) => $media->getUrl());
+
+            $product->isLiked = in_array($product->id, $likedProductIds);
+
+            if ($user) {
+                $isEligible = $product->eligibleStatuses()
+                    ->wherePivot('userstatus_id', $user->userstatus->id)
+                    ->withPivot('discount')
+                    ->first();
+
+                if ($isEligible) {
+                    $product->discountstatus = [
+                        'userstatus' => $user->userstatus,
+                        'discount' => $isEligible->pivot->discount,
+                    ];
+                    $product->discountstatusprice = $user->getPriceByStatus(
+                        $product,
+                        $product->price,
+                        $product->price
+                    );
+                } else {
+                    $product->discountstatus = null;
+                    $product->discountstatusprice = $product->discountprice;
+                }
+            } else {
+                $product->discountstatus = null;
+                $product->discountstatusprice = $product->discountprice;
+            }
+
+            return $product;
+        });
 
         return response()->json([
             'collection' => [
@@ -67,9 +108,41 @@ class CollectionController extends Controller
 
 
 
+
     public function addtocollection(Collection $collection, Product $product)
     {
         $collection->products()->attach($product->id);
         return response()->json(['message' => 'Product added to collection successfully']);
+    }
+
+
+    public function singleadmincollection(Collection $collection)
+    {
+        $collection->load('products');
+
+        $collection->products->transform(function ($product) {
+
+            $product->discountstatusprice = $product->discountprice;
+            return $product;
+        });
+
+        return response()->json([
+            'collection' => [
+                'id' => $collection->id,
+                'title' => $collection->title,
+                'headerColor' => $collection->headerColor,
+                'description' => $collection->description,
+                'discount' => $collection->discount,
+                'created_at' => $collection->created_at,
+                'updated_at' => $collection->updated_at,
+                'products' => ProductResource::collection($collection->products),
+            ]
+        ]);
+    }
+
+    public function allProductsForCollection(Collection $collection)
+    {
+        $products = Product::where('discount', $collection->discount)->get();
+        return ProductResource::collection($products);
     }
 }

@@ -26,8 +26,9 @@ Route::group(['prefix' => 'admin/collection', 'middleware' => ['adminpanel', 'au
 
     Route::post('/create', [CollectionController::class, 'create']);
     Route::post('/delete/{collection}', [CollectionController::class, 'deletecollection']);
-    Route::get('/{collection}', [CollectionController::class, 'singlecollection']);
+    Route::get('/{collection}', [CollectionController::class, 'singleadmincollection']);
     Route::post('/addtocollection/{collection}/product/{product}', [CollectionController::class, 'addtocollection']);
+    Route::get('/display/products/{collection}', [CollectionController::class, 'allProductsForCollection']);
 });
 Route::get('/collection/display', [CollectionController::class, 'getcollection']);
-Route::get('/product/{collection}', [CollectionController::class, 'singlecollection']);
+Route::get('/product/collection/{collection}', [CollectionController::class, 'singlecollection']);

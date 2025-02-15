@@ -88,7 +88,10 @@ class CartController extends Controller
         $size = $request->size ? $request->size : $randomSize;
         $totalPrice = $user->getPriceByStatus($product, $product->price, $product->discountprice) * $quantity;
         if ($cartItem) {
-            return response()->json(['message' => 'Product added Already']);
+            return response()->json([
+                'success' => false,
+                'message' => 'AlreadyExist'
+            ]);
         } else {
 
             $cart->products()->attach($product->id, [
@@ -97,7 +100,10 @@ class CartController extends Controller
                 'retail_price' => $user->getPriceByStatus($product, $product->price, $product->discountprice),
                 'total_price' => $totalPrice
             ]);
-            return response()->json(['message' => 'Product added to cart successfully']);
+            return response()->json([
+                'success' => true,
+                'message' => 'AddSuccestocart'
+            ]);
         }
     }
 

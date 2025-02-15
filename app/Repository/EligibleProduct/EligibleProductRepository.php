@@ -2,11 +2,17 @@
 
 namespace App\Repository\EligibleProduct;
 
+use App\Helpers\ProductHelper;
 use App\Models\Eligibleproduct;
 use App\Models\Userstatus;
 
 class EligibleProductRepository implements EligibleProductRepositoryInterface
 {
+    private $productHelper;
+    public function __construct(ProductHelper $productHelper)
+    {
+        $this->productHelper = $productHelper;
+    }
 
     public function display($id)
     {
@@ -74,6 +80,46 @@ class EligibleProductRepository implements EligibleProductRepositoryInterface
                 'message' => "cant Create",
                 'error' => $e->getMessage()
             ]);
+        }
+    }
+
+    public function displayEligibleProduct($user)
+    {
+        if ($user) {
+            $status = $user->userstatus()->first();
+            if ($status->isActive()) {
+                $products = $status->eligibleProducts()
+                    ->select(
+                        "products.id",
+                        "products.name",
+                        "products.description",
+                        "products.price",
+                        "products.discount",
+                        "products.discountprice",
+                        "products.active"
+                    )
+                    ->withAvg('rateproduct', 'rate')
+                    ->where("products.active", 1)
+                    ->get();
+                $products = $products->map(function ($product) {
+                    $product->Rate = number_format((float)$product->rateproduct_avg_rate, 1);
+                    unset($product->rateproduct_avg_rate);
+                    return $product;
+                });
+
+
+                $this->productHelper->transform($products, $user, null, false);
+
+                if ($products) {
+                    return [
+                        'products' => $products
+                    ];
+                }
+            } else {
+                return [
+                    'products' => []
+                ];
+            }
         }
     }
 }

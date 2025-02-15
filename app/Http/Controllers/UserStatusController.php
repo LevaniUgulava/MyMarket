@@ -24,6 +24,8 @@ class UserStatusController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'toachieve' => 'required|numeric|min:0',
+            'start_data' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_data',
         ]);
 
         $result = $this->userStatusRepository->create($data);
@@ -40,5 +42,10 @@ class UserStatusController extends Controller
     {
         $result = $this->userStatusRepository->StatuswithUser($id);
         return $result;
+    }
+    public function displaystatus()
+    {
+        $result = $this->userStatusRepository->displayStatus();
+        return response()->json(["status" => $result]);
     }
 }

@@ -19,4 +19,10 @@ class Userstatus extends Model
     {
         return $this->belongsToMany(Product::class, 'eligibleproducts', 'userstatus_id', 'product_id');
     }
+
+    public function isActive(): bool
+    {
+        $now = now();
+        return $this->start_date <= $now && ($this->end_date === null || $this->end_date >= $now);
+    }
 }

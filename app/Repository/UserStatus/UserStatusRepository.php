@@ -4,6 +4,7 @@ namespace App\Repository\UserStatus;
 
 use App\Models\Userstatus;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class UserStatusRepository implements UserStatusRepositoryInterface
 {
@@ -67,5 +68,11 @@ class UserStatusRepository implements UserStatusRepositoryInterface
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+    public function displayStatus()
+    {
+        $user = Auth::user();
+        $status = $user->userstatus()->select('name', 'start_data', 'end_date')->first();
+        return $status;
     }
 }

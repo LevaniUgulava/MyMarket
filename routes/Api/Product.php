@@ -25,6 +25,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::get('/display', [ProductController::class, 'display']);
 Route::get('/display/{id}', [ProductController::class, 'displaybyid']);
+Route::get('/similar/{id}/products', [ProductController::class, 'similarproducts']);
+
 Route::post('/Search', [ProductController::class, 'filterbyname']);
 Route::get('/Searchcategory/{id}', [ProductController::class, 'filterbycategory']);
 
@@ -33,11 +35,11 @@ Route::group(['middleware' => ['auth:sanctum', 'adminpanel']], function () {
     Route::post('/addproduct', [ProductController::class, 'create'])->middleware('auth:sanctum');
     Route::post('/notactive/{id}', [ProductController::class, 'notactive']);
     Route::post('/active/{id}', [ProductController::class, 'active']);
-    Route::post('/discount', [ProductController::class, 'discount']);
-    Route::get('/discountproducts', [ProductController::class, 'discountproducts']);
+    Route::post('/discount', [ProductController::class, 'setdiscount']);
 });
+Route::get('/discountproducts', [ProductController::class, 'discountproducts']);
 
 Route::post('/product/rate/{id}', [RateContorller::class, 'SendRate'])->middleware('auth:sanctum');
 
-
+Route::get('/test', [ProductController::class, 'test']);
 Route::get('/getSizes', [ProductController::class, 'getSizes']);

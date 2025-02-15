@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Status;
+use App\Events\ProductPurchased;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\Product;
@@ -69,6 +70,7 @@ class PaymentController extends Controller
             $cart->products()->detach();
 
             $cart->delete();
+            event(new ProductPurchased($admin));
 
 
             return response()->json($i);

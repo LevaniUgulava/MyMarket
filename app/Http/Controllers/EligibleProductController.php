@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Repository\EligibleProduct\EligibleProductRepositoryInterface;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class EligibleProductController extends Controller
 {
@@ -40,5 +41,12 @@ class EligibleProductController extends Controller
         ]);
         $result = $this->eligibleproductrepository->delete($id, $data);
         return $result;
+    }
+
+    public function displayEligibleProduct()
+    {
+        $user = Auth::user();
+        $response = $this->eligibleproductrepository->displayEligibleProduct($user);
+        return response()->json($response);
     }
 }

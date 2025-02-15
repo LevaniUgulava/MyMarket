@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Cache;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
-#[ObservedBy([ProductLoggerObserver::class])]
+// #[ObservedBy([ProductLoggerObserver::class])]
 
 class Product extends Model implements HasMedia
 {
@@ -52,12 +52,20 @@ class Product extends Model implements HasMedia
         }
     }
 
-    public function scopeSection($query, $section)
+    public function scopeSection($query, $user, $section)
     {
         if ($section === "all") {
             $query;
         } elseif ($section === "discount") {
-            $query->where('discount', '!=', 0);
+            $query->where(function ($q) use ($user) {
+                $q->where('discount', '!=', 0);
+                if ($user && isset($user->userstatus) && $user->userstatus->isActive()) {
+                    $q->orWhereHas('eligibleStatuses', function ($q2) use ($user) {
+                        $q2->where('userstatus_id', $user->userstatus->id)
+                            ->where('discount', '!=', 0);
+                    });
+                }
+            });
         } elseif ($section === "highrate") {
             $query
                 ->having('rateproduct_avg_rate', '!=', 0.0)

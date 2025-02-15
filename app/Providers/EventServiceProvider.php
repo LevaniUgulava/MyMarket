@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Events\ProductPurchased;
 use App\Events\RegisterNotification;
 use App\Events\Sitelog;
 use App\Listeners\RegisterNotificatinSend;
+use App\Listeners\SendProducutPurchasedNotification;
 use App\Listeners\SitelogAction;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -24,6 +26,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         RegisterNotification::class  => [
             RegisterNotificatinSend::class,
+        ],
+        ProductPurchased::class => [
+            SendProducutPurchasedNotification::class,
         ]
     ];
 

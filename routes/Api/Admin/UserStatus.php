@@ -39,3 +39,6 @@ Route::group(['middleware' => ['auth:sanctum', 'admin', 'adminpanel'], 'prefix' 
         Route::post('/delete/{id}', [EligibleProductController::class, 'delete']);
     });
 });
+
+Route::get('/current/status', [UserStatusController::class, 'displayStatus'])->middleware('auth:sanctum');
+Route::get('/exlusive', [EligibleProductController::class, 'displayEligibleProduct'])->middleware('auth:sanctum');

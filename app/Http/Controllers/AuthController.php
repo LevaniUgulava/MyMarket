@@ -7,6 +7,7 @@ use App\Http\Requests\RegisterRequest;
 use App\Models\User;
 use App\Models\Userstatus;
 use App\Notifications\CustomVerifyEmail;
+use App\Notifications\DeleteAccountNotification;
 use App\Notifications\RegisterNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,7 +31,6 @@ class AuthController extends Controller
             'message' => 'Registered',
             'id' => $user->id,
             'roles' => $roles
-
         ]);
     }
     public function login(LoginRequest $request)
@@ -51,7 +51,8 @@ class AuthController extends Controller
             'token' => $token,
             'roles' => $roles,
             'status' => $status,
-            'total_spent' => $user->total_spent
+            'total_spent' => $user->total_spent,
+            "number" => $user->phone_number
         ]);
     }
 
@@ -109,5 +110,20 @@ class AuthController extends Controller
             'statuses' => $statuses
 
         ]);
+    }
+
+    public function deleteAcc()
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json("Not exist");
+        }
+
+        $result = $user->delete();
+        if ($result) {
+            $user->notify(new DeleteAccountNotification());
+        }
+
+        return response()->json("Delete Succesfully", 200);
     }
 }

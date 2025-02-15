@@ -2,58 +2,37 @@
 
 namespace App\Repository\Product;
 
+use App\Helpers\ProductHelper;
 use App\Helpers\Translator;
 use App\Models\Clothsize;
 use App\Models\Product;
 use App\Models\Shoessize;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class ProductRepository implements ProductRepositoryInterface
 {
+    private $productHelper;
+    public function __construct(ProductHelper $productHelper)
+    {
+        $this->productHelper = $productHelper;
+    }
     public function display($name, $maincategoryid, $categoryid, $subcategoryid, $pagination, $user, $section, $lang, $price1, $price2)
     {
-        $products = Product::withAvg('rateproduct', 'rate')
-            ->with(['Maincategory', 'Category', 'Subcategory', 'eligibleStatuses'])
+        $products = Product::query()->withAvg('rateproduct', 'rate')
+            ->with(['Maincategory:id,name', 'Category:id,name', 'Subcategory:id,name', 'eligibleStatuses'])
             ->when($name, fn($query) => $query->searchname($name))
             ->when($maincategoryid, fn($query) => $query->searchmain($maincategoryid))
             ->when($categoryid, fn($query) => $query->searchcategory($categoryid))
             ->when($subcategoryid, fn($query) => $query->searchsubcategory($subcategoryid))
-            ->when($section, fn($query) => $query->section($section))
+            ->when($section, fn($query) => $query->section($user, $section))
             ->when($price1 || $price2, fn($query) => $query->price($price1, $price2))
             ->where('active', 1)
             ->paginate($pagination);
 
-        $likedProductIds = $user ? $user->manyproducts()->pluck('product_id')->toArray() : [];
-        $ratedProductIds = $user ? $user->rateuser()->pluck('product_id')->toArray() : [];
-
-        $products->getCollection()->transform(function ($product) use ($likedProductIds, $ratedProductIds, $lang, $user) {
-            $product->image_urls = $product->getMedia('default')->map(fn($media) => $media->getUrl());
-            $product->isLiked = in_array($product->id, $likedProductIds);
-            $product->isRated = in_array($product->id, $ratedProductIds);
-
-            if ($user) {
-                $isEligible =  $product->eligibleStatuses()->wherePivot('userstatus_id', $user->userstatus->id)->withPivot('discount')->first();
-                if ($isEligible) {
-                    $product->discountstatus = [
-                        'userstatus' => $user->userstatus,
-                        'discount' => $isEligible->pivot->discount
-                    ];
-                    $product->discountstatusprice = $user->getPriceByStatus($product, $product->price, $product->price);
-                } else {
-                    $product->discountstatus = null;
-                    $product->discountstatusprice = $product->discountprice;
-                }
-            } else {
-                $product->discountstatus = null;
-                $product->discountstatusprice = $product->discountprice;
-            }
-
-            // $cacheKeyDesc = "product_{$product->id}_description_{$lang}";
-            // $product->description = Cache::remember($cacheKeyDesc, 60 * 60 * 24, fn() => Translator::translate($product->description, $lang));
-            return $product;
-        });
+        $this->productHelper->transform($products, $user, $lang, false);
 
         return $products;
     }
@@ -101,31 +80,25 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function displaybyid($id, $user)
     {
-        $products = Product::with('Maincategory', 'Category', 'Subcategory', 'shoesize', 'clothsize')
+        $product = Product::with('shoesize', 'clothsize')
             ->withAvg('rateproduct', 'rate')
             ->where('id', $id)
             ->get();
-        $products = $products->map(function ($product) use ($user) {
-            $product->image_urls = $product->getMedia('default')->map(fn($media) => $media->getUrl());
+        $this->productHelper->transform($product, $user);
 
-            if ($product->isRated && $user) {
-                $product->MyRate = $user->rateuser()->where('product_id', $product->id)->first()->rate;
-            } else {
-                $product->MyRate = null;
-            }
-            $product->description = Translator::translate($product->description, "ka");
-            $isEligible = $user && $product->eligibleStatuses()->wherePivot('userstatus_id', $user->userstatus->id)->exists();
-            if ($isEligible) {
-                $product->discountstatus = $user->userstatus;
-                $product->discountstatusprice = $user->getPriceByStatus($product, $product->price, $product->price);
-            } else {
-                $product->discountstatus = null;
-                $product->discountstatusprice = $product->discountprice;
-            }
-
-            return $product;
-        });
-
+        return $product;
+    }
+    public function similarproducts($id, $user)
+    {
+        $product = Product::where('id', $id)->first();
+        $categoryid = $product->category_id;
+        $products = Product::where('id', '!=', '$id')
+            ->where('category_id', $categoryid)
+            ->withAvg('rateproduct', 'rate')
+            ->inRandomOrder()
+            ->limit(10)
+            ->get();
+        $this->productHelper->transform($products, $user, null, false);
         return $products;
     }
 

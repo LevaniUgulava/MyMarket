@@ -3,20 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ProductSize;
-use App\Helpers\EnumHelper;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Models\User;
 use App\Notifications\DiscountNotification;
-use App\Notifications\RegisterNotification;
 use App\Repository\Product\ProductRepositoryInterface;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Auth;
-use \App\Helpers;
-use App\Http\Requests\CreateProductRequest;
 use Illuminate\Support\Facades\Log;
-use Intervention\Image\Gd\Commands\GetSizeCommand;
 
 class ProductController extends Controller
 {
@@ -46,6 +39,7 @@ class ProductController extends Controller
                 return new ProductResource($product, $user);
             });
         }
+
         return response()->json($result);
     }
 
@@ -80,6 +74,12 @@ class ProductController extends Controller
         $products = $this->productRepository->displaybyid($id, $user);
         return ProductResource::collection($products);
     }
+    public function similarproducts($id)
+    {
+        $user = auth('sanctum')->user();
+        $products = $this->productRepository->similarproducts($id, $user);
+        return ProductResource::collection($products);
+    }
 
     public function create(Request $request)
     {
@@ -110,7 +110,7 @@ class ProductController extends Controller
 
 
 
-    public function discount(Request $request)
+    public function setdiscount(Request $request)
     {
 
         $ids = $request->id;
@@ -125,7 +125,8 @@ class ProductController extends Controller
                 "discountprice" => $price * ((100 - $discount) / 100)
             ]);
         }
-        if ($request->send) {
+        // if ($request->send) {
+        if (true) {
             $users = User::get();
             foreach ($users as $user) {
                 $user->notify(new DiscountNotification($ids, $user->name, $discount));
@@ -135,6 +136,9 @@ class ProductController extends Controller
 
         return response()->json("success");
     }
+
+
+
     public function discountproducts($ids)
     {
         if (empty($ids)) {
@@ -146,10 +150,12 @@ class ProductController extends Controller
         return response()->json($products);
     }
 
+
     public function getSizes()
     {
         return response()->json([
-            "sizes" => EnumHelper::GetSizesAsArray(),
+            "letterbased" => ProductSize::letterBasedSizes(),
+            "numericbased" => ProductSize::numericBasedSizes()
         ]);
     }
 }

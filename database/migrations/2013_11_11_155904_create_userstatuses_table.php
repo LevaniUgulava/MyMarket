@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->decimal('toachieve', 10, 2);
+            $table->timestamp("start_data")->nullable();
+            $table->timestamp("end_date")->nullable();
             $table->timestamps();
         });
     }
