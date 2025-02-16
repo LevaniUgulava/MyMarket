@@ -83,8 +83,8 @@ class ProductRepository implements ProductRepositoryInterface
         $product = Product::with('shoesize', 'clothsize')
             ->withAvg('rateproduct', 'rate')
             ->where('id', $id)
-            ->get();
-        $this->productHelper->transform($product, $user);
+            ->first();
+        $this->productHelper->transformSingleProduct($product, $user);
 
         return $product;
     }

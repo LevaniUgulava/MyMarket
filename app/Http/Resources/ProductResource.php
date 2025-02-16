@@ -51,9 +51,9 @@ class ProductResource extends JsonResource
             'discount' => $this->discount,
             'discountstatus' => $this->discountstatus,
             'discountprice' => $this->discountprice,
-            'MainCategory' => $this->MainCategory->name,
-            'Category' => $this->Category->name,
-            'SubCategory' => $this->Subcategory->name,
+            'MainCategory' => $this->MainCategory,
+            'Category' => $this->Category,
+            'SubCategory' => $this->Subcategory,
             'image_urls' => $this->getMedia('default')->map(function ($media) {
                 return url('storage/' . $media->id . '/' . $media->file_name);
             }),

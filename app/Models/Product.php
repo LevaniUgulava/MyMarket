@@ -48,7 +48,7 @@ class Product extends Model implements HasMedia
     public function scopeSearchsubcategory($query, $subcategoryid)
     {
         if ($subcategoryid) {
-            return $query->where('category_id', $subcategoryid);
+            return $query->where('subcategory_id', $subcategoryid);
         }
     }
 

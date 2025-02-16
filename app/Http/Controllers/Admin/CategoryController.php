@@ -35,6 +35,14 @@ class CategoryController extends Controller
 
         ]);
     }
+    public function Maincategorybyid($id)
+    {
+        $maincategory = Maincategory::findorfail($id);
+        return response()->json([
+            "id" => $maincategory->id,
+            "name" => $maincategory->name
+        ]);
+    }
 
     public function displaycategory()
     {
@@ -58,6 +66,15 @@ class CategoryController extends Controller
         $category->delete();
         return response()->json([
             'message' => 'Category deleted',
+
+        ]);
+    }
+    public function categorybyid($id)
+    {
+        $category = Category::findorfail($id);
+        return response()->json([
+            "id" => $category->id,
+            "name" => $category->name
 
         ]);
     }
@@ -86,6 +103,15 @@ class CategoryController extends Controller
         $subcategory->delete();
         return response()->json([
             'message' => 'SubCategory deleted',
+
+        ]);
+    }
+    public function subcategorybyid($id)
+    {
+        $subcategory = Subcategory::findorfail($id);
+        return response()->json([
+            "id" => $subcategory->id,
+            "name" => $subcategory->name
 
         ]);
     }

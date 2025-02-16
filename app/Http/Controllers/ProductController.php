@@ -71,9 +71,10 @@ class ProductController extends Controller
     public function displaybyid($id)
     {
         $user = auth('sanctum')->user();
-        $products = $this->productRepository->displaybyid($id, $user);
-        return ProductResource::collection($products);
+        $product = $this->productRepository->displaybyid($id, $user);
+        return new ProductResource($product);
     }
+
     public function similarproducts($id)
     {
         $user = auth('sanctum')->user();

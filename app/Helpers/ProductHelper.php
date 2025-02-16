@@ -41,4 +41,53 @@ class ProductHelper
             return $product;
         });
     }
+    public function transformSingleProduct($product, $user, $lang = null, $size = true)
+    {
+        $likedProductIds = $user ? $user->manyproducts()->pluck('product_id')->toArray() : [];
+        $product->image_urls = $product->getMedia('default')->map(fn($media) => $media->getUrl());
+        $product->isLiked = in_array($product->id, $likedProductIds);
+
+        if ($user) {
+            $isEligible = $product->eligibleStatuses()
+                ->wherePivot('userstatus_id', $user->userstatus->id)
+                ->withPivot('discount')
+                ->first();
+
+            if ($isEligible && $user->userstatus->isActive()) {
+                $product->discountstatus = [
+                    'discount' => $isEligible->pivot->discount
+                ];
+                $product->discountprice = $user->getPriceByStatus($product, $product->price, $product->price);
+            } else {
+                $product->discountprice = $product->discountprice;
+            }
+        } else {
+            $product->discountprice = $product->discountprice;
+        }
+
+        if ($size) {
+            if (!empty($product->shoesize) && $product->shoesize->isNotEmpty()) {
+                $product->size_type = "numericbased";
+            } elseif (!empty($product->clothsize) && $product->clothsize->isNotEmpty()) {
+                $product->size_type = "letterbased";
+            }
+        }
+        $product->MainCategory = [
+            'id' => optional($product->MainCategory)->id,
+            'name' => optional($product->MainCategory)->name
+        ];
+        $product->Category = [
+            'id' => optional($product->Category)->id,
+            'name' => optional($product->Category)->name
+        ];
+        $product->Subcategory = [
+            'id' => optional($product->Subcategory)->id,
+            'name' => optional($product->Subcategory)->name
+        ];
+
+
+        unset($product->media);
+
+        return $product;
+    }
 }
