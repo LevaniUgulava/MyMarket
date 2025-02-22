@@ -17,7 +17,6 @@ class ProductHelper
                 $isEligible =  $product->eligibleStatuses()->wherePivot('userstatus_id', $user->userstatus->id)->withPivot('discount')->first();
                 if ($isEligible && $user->userstatus->isActive()) {
                     $product->discountstatus = [
-                        // 'userstatus' => $user->userstatus,
                         'discount' => $isEligible->pivot->discount
                     ];
                     $product->discountprice = $user->getPriceByStatus($product, $product->price, $product->price);
@@ -30,9 +29,9 @@ class ProductHelper
 
             if ($size) {
                 if ($product->shoesize->isNotEmpty()) {
-                    $product->size_type = "numericbased";
+                    $product->size_type = "shoesize";
                 } elseif ($product->clothsize->isNotEmpty()) {
-                    $product->size_type = "letterbased";
+                    $product->size_type = "clothsize";
                 }
             }
             unset($product->media);

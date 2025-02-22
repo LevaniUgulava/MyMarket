@@ -79,7 +79,6 @@ class CartController extends Controller
             $cart = $existingCart;
         }
 
-        //esaa gasafixsi
 
         $randomSize = $this->randSizeHandle($product, $request->type);
 
@@ -106,6 +105,27 @@ class CartController extends Controller
             ]);
         }
     }
+    public function changeSize($id, Request $request)
+    {
+        $user = Auth::user();
+        $currentsize = $request->size;
+        $newsize = $request->newsize;
+        $cart = $user->carts()->pluck("id");
+        $updated = DB::table('cart_item')
+            ->where('cart_id', $cart)
+            ->where('product_id', $id)
+            ->where('size', $currentsize)
+            ->update([
+                "size" => $newsize
+            ]);
+
+        if ($updated) {
+            return response()->json(['message' => 'size updated successfully']);
+        } else {
+            return response()->json(['error' => 'Failed to update quantity'], 500);
+        }
+    }
+
 
 
     public function getcart()
@@ -120,10 +140,17 @@ class CartController extends Controller
             });
 
             $product->price = $user->getPriceByStatus($productModel, $product->price, $product->discountprice);
-
+            if ($productModel->shoesize && $productModel->shoesize->isNotEmpty()) {
+                $product->availablesize = $productModel->shoesize->pluck("size");
+            } elseif ($productModel->clothsize && $productModel->clothsize->isNotEmpty()) {
+                $product->availablesize = $productModel->clothsize->pluck("size");
+            } else {
+                $product->availablesize = [];
+            }
 
             return $product;
         });
+
 
         $totalPrice = $products->sum('total_price');
 
@@ -141,9 +168,9 @@ class CartController extends Controller
         $user = Auth::user();
         $data = $user->cartItems()->where('product_id', $id)->where('size', $request->size)->first();
 
-        $product = Product::with('clothsize.quantities')->where('id', $id)->first();
+        $product = Product::where('id', $id)->first();
 
-        $fullquantity = $productService->getClothsize($product, $request->size);
+        $fullquantity = $productService->getSize($product, $request->size);
 
         $cart = $user->carts()->first();
         if ($data) {

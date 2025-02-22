@@ -6,17 +6,16 @@ use App\Models\Product;
 
 class ProductService
 {
-    public function getClothsize($product, $size)
+    public function getSize($product, $size)
     {
         if ($product) {
             $clothsize = $product->clothsize->where('size', $size)->first();
-
-            if ($clothsize) {
-                $fullquantity = $clothsize->quantities()->first()->quantity;
+            $shoesize = $product->shoesize->where('size', $size)->first();
+            $size = $clothsize ?? $shoesize;
+            if ($size) {
+                $fullquantity = $size->quantities()->first()->quantity;
                 return $fullquantity;
             }
         }
     }
-
-
 }

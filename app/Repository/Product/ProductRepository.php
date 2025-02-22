@@ -32,7 +32,7 @@ class ProductRepository implements ProductRepositoryInterface
             ->where('active', 1)
             ->paginate($pagination);
 
-        $this->productHelper->transform($products, $user, $lang, false);
+        $this->productHelper->transform($products, $user, $lang);
 
         return $products;
     }
