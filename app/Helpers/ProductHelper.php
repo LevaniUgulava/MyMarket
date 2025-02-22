@@ -67,9 +67,9 @@ class ProductHelper
 
         if ($size) {
             if (!empty($product->shoesize) && $product->shoesize->isNotEmpty()) {
-                $product->size_type = "numericbased";
+                $product->size_type = "shoesize";
             } elseif (!empty($product->clothsize) && $product->clothsize->isNotEmpty()) {
-                $product->size_type = "letterbased";
+                $product->size_type = "clothsize";
             }
         }
         $product->MainCategory = [

@@ -79,9 +79,9 @@ class CartController extends Controller
             $cart = $existingCart;
         }
 
-        $productexistsizes = $product->clothsize;
-        $existsize = $productexistsizes->pluck('size')->toArray();
-        $randomSize = $existsize[array_rand($existsize)];
+        //esaa gasafixsi
+
+        $randomSize = $this->randSizeHandle($product, $request->type);
 
         $cartItem = $cart->products()->where('product_id', $product->id)->where('size', $request->size)->first();
         $quantity =  1;
@@ -212,5 +212,12 @@ class CartController extends Controller
         } else {
             return response()->json(["error" => "Failed to delete product"], 500);
         }
+    }
+
+    public function randSizeHandle($product, $type)
+    {
+        $productexistsizes = $product->$type;
+        $existsize = $productexistsizes->pluck('size')->toArray();
+        return $existsize[array_rand($existsize)];
     }
 }
