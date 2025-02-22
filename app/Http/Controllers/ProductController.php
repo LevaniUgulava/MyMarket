@@ -159,4 +159,9 @@ class ProductController extends Controller
             "numericbased" => ProductSize::numericBasedSizes()
         ]);
     }
+    public function getNameforSearch()
+    {
+        $productNames = Product::distinct()->pluck("name");
+        return response()->json($productNames);
+    }
 }

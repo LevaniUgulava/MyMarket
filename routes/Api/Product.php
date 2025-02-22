@@ -41,5 +41,5 @@ Route::get('/discountproducts', [ProductController::class, 'discountproducts']);
 
 Route::post('/product/rate/{id}', [RateContorller::class, 'SendRate'])->middleware('auth:sanctum');
 
-Route::get('/test', [ProductController::class, 'test']);
 Route::get('/getSizes', [ProductController::class, 'getSizes']);
+Route::get('/nameforsearch', [ProductController::class, 'getNameforSearch']);
