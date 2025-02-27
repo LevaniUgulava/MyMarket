@@ -13,7 +13,7 @@ class CategoryController extends Controller
 {
     public function displaymain()
     {
-        $maincategory = Maincategory::all();
+        $maincategory = Maincategory::select('id', 'name')->get();
         return $maincategory;
     }
 
@@ -37,7 +37,7 @@ class CategoryController extends Controller
     }
     public function Maincategorybyid($id)
     {
-        $maincategory = Maincategory::findorfail($id);
+        $maincategory = Maincategory::select('id', 'name')->findorfail($id);
         return response()->json([
             "id" => $maincategory->id,
             "name" => $maincategory->name

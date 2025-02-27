@@ -23,6 +23,6 @@ class Userstatus extends Model
     public function isActive(): bool
     {
         $now = now();
-        return $this->start_date <= $now && ($this->end_date === null || $this->end_date >= $now);
+        return $this->start_data <= $now && ($this->end_date === null || $this->end_date >= $now);
     }
 }
