@@ -6,8 +6,11 @@ use App\Enums\ProductSize;
 use App\Helpers\ProductHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
+use App\Models\Clothsize;
+use App\Models\Color;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Shoessize;
 use App\Services\ProductService;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Http\Request;
@@ -50,19 +53,6 @@ class CartController extends Controller
         }
     }
 
-    public function count(Product $product)
-    {
-        $countcomment =  $product->commentusers()->count();
-        return response()->json([
-            'liked' => true,
-            'countcomment' => $countcomment
-
-        ]);
-    }
-
-
-
-
 
     public function cart(Product $product, Request $request)
     {
@@ -81,27 +71,28 @@ class CartController extends Controller
 
 
         $randomSize = $this->randSizeHandle($product, $request->type);
+        $randomColor = $this->randColorHandle($randomSize, $product->id);
 
         $cartItem = $cart->products()->where('product_id', $product->id)->where('size', $request->size)->first();
-        $quantity =  1;
+        $quantity = $request->quantity ?? 1;
         $size = $request->size ? $request->size : $randomSize;
+        $color = $request->color ? $request->color : $randomColor;
         $totalPrice = $user->getPriceByStatus($product, $product->price, $product->discountprice) * $quantity;
         if ($cartItem) {
             return response()->json([
-                'success' => false,
-                'message' => 'AlreadyExist'
+                'message' => 'პროდუქტი კალათაში დამატებულია'
             ]);
         } else {
 
             $cart->products()->attach($product->id, [
                 'quantity' => $quantity,
                 'size' => $size,
+                "color" => $color,
                 'retail_price' => $user->getPriceByStatus($product, $product->price, $product->discountprice),
                 'total_price' => $totalPrice
             ]);
             return response()->json([
-                'success' => true,
-                'message' => 'AddSuccestocart'
+                'message' => 'პროდუქტი კალათაში დაემტა'
             ]);
         }
     }
@@ -116,7 +107,8 @@ class CartController extends Controller
             ->where('product_id', $id)
             ->where('size', $currentsize)
             ->update([
-                "size" => $newsize
+                "size" => $newsize,
+                "color" => null
             ]);
 
         if ($updated) {
@@ -125,8 +117,26 @@ class CartController extends Controller
             return response()->json(['error' => 'Failed to update quantity'], 500);
         }
     }
+    public function changeColor($id, Request $request)
+    {
+        $user = Auth::user();
+        $currentsize = $request->size;
+        $color = $request->color;
+        $cart = $user->carts()->pluck("id");
+        $updated = DB::table('cart_item')
+            ->where('cart_id', $cart)
+            ->where('product_id', $id)
+            ->where('size', $currentsize)
+            ->update([
+                "color" => $color
+            ]);
 
-
+        if ($updated) {
+            return response()->json(['message' => 'size updated successfully']);
+        } else {
+            return response()->json(['error' => 'Failed to update quantity'], 500);
+        }
+    }
 
     public function getcart()
     {
@@ -140,13 +150,30 @@ class CartController extends Controller
             });
 
             $product->price = $user->getPriceByStatus($productModel, $product->price, $product->discountprice);
-            if ($productModel->shoesize && $productModel->shoesize->isNotEmpty()) {
-                $product->availablesize = $productModel->shoesize->pluck("size");
-            } elseif ($productModel->clothsize && $productModel->clothsize->isNotEmpty()) {
-                $product->availablesize = $productModel->clothsize->pluck("size");
-            } else {
-                $product->availablesize = [];
-            }
+
+            $rawdata = Color::whereHasMorph(
+                "colorable",
+                [Shoessize::class, Clothsize::class],
+                function ($query) use ($product) {
+                    $query->where("product_id", $product->id);
+                }
+            )
+                ->with([
+                    "colorable" => function ($query) {
+                        $query->select("id", "size", "product_id");
+                    }
+                ])
+                ->select("id", "color", "colorable_id", "colorable_type")
+                ->get();
+
+            $product->availablesize = $rawdata->groupby(function ($item) {
+                return $item->colorable->size;
+            })->map(function ($colors) {
+                return $colors->pluck("color");
+            });
+
+
+
 
             return $product;
         });
@@ -241,10 +268,19 @@ class CartController extends Controller
         }
     }
 
-    public function randSizeHandle($product, $type)
+    private function randSizeHandle($product, $type)
     {
         $productexistsizes = $product->$type;
         $existsize = $productexistsizes->pluck('size')->toArray();
         return $existsize[array_rand($existsize)];
+    }
+
+    private function randColorHandle($size, $id)
+    {
+        $colors = Color::wherehasmorph("colorable", [Shoessize::class, Clothsize::class], function ($q) use ($size, $id) {
+            $q->where("size", $size)->where("product_id", $id);
+        })->pluck("color")->toArray();
+
+        return $colors[array_rand($colors)];
     }
 }

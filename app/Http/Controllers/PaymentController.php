@@ -5,9 +5,13 @@ namespace App\Http\Controllers;
 use App\Enums\Status;
 use App\Events\ProductPurchased;
 use App\Models\Cart;
+use App\Models\Clothsize;
+use App\Models\Color;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Quantity;
+use App\Models\Shoessize;
+use App\Models\TemporaryOrder;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,59 +27,148 @@ class PaymentController extends Controller
         $this->discountController = $discountController;
     }
 
+    public function Temporder(Request $request)
+    {
+        $user = auth('sanctum')->user();
+        $request->validate([
+            "products" => "required|array",
+            "products.*.guest_token" => "required|string",
+            "products.*.quantity" => "required|integer",
+            "products.*.product_id" => "required|numeric",
+            "products.*.type" => "required|string|max:100",
+            "products.*.name" => "required|string|max:100",
+            "products.*.color" => "required|string|max:100",
+            "products.*.size" => "required",
+            "products.*.retail_price" => "required|numeric",
+            "products.*.total_price" => "required|numeric",
+        ]);
+
+        foreach ($request->products as $item) {
+            $temporder = TemporaryOrder::create([
+                "user_id" => $user->id ?? null,
+                "guest_token" => $item["guest_token"],
+                "quantity" => $item["quantity"],
+                "product_id" => $item["product_id"],
+                "size" => $item["size"],
+                "name" => $item["name"],
+                "type" => $item['type'],
+                "color" => $item["color"],
+                "retail_price" => $item["retail_price"],
+                "total_price" => $item["total_price"]
+            ]);
+        }
+
+        if ($temporder) {
+            return response()->json([], 200);
+        } else {
+            return response()->json([], 400);
+        }
+    }
+    public function getTemporder(Request $request)
+    {
+        $user = auth('sanctum')->user();
+        $guestToken = $request->header("Guest-Token");
+
+        if ($user) {
+            $tempOrders = TemporaryOrder::where("user_id", $user->id)
+                ->orWhere("guest_token", $guestToken)
+                ->get();
+        } else {
+            $tempOrders = TemporaryOrder::where("guest_token", $guestToken)->get();
+        }
+
+        return response()->json($tempOrders);
+    }
+    public function deleteTempOrder(Request $request)
+    {
+        $guestToken = $request->header("Guest-Token");
+
+        if (!$guestToken) {
+            return response()->json(["message" => "Guest token required"], 400);
+        }
+
+        $deleted = TemporaryOrder::where("guest_token", $guestToken)->delete();
+
+        if ($deleted) {
+            return response()->json(["message" => "Temporary order deleted"]);
+        } else {
+            return response()->json(["message" => "No temporary order found"], 404);
+        }
+    }
+
+
+
+
     public function checkout(Request $request)
     {
         $request->validate([
             'address' => 'required|string|max:100',
             'phone' => 'nullable|regex:/^[1-9][0-9]{8}$/',
+            'firstname' => 'nullable|string|max:100',
+            'lastname' => 'nullable|string|max:100',
+            'town' => 'required|string|max:100',
+            'products' => 'required|array',
+            'products.*.product_id' => 'nullable|integer',
+            'products.*.quantity' => 'required|integer|min:1',
+            'products.*.size' => 'required',
+            "products.*.color" => "required|string|max:100",
+            'products.*.retail_price' => 'required|numeric',
+            'products.*.total_price' => 'required|numeric',
         ]);
         $address = $request->input('address');
         $number = $request->input('phone');
-        $user = Auth::user();
-        $this->UpdatePhone($user, $number);
-        $cart = $user->carts()->latest()->first();
-
-        if (!$cart) {
-            return response()->json(['message' => 'No active cart available for checkout'], 404);
-        }
-
-        $gets = $user->cartItems()->get();
+        $firstname = $request->input('firstname');
+        $lastname = $request->input('lastname');
+        $town = $request->input('town');
+        $user = auth('sanctum')->user();
+        $gets = $request->products;
         $price = 0;
         foreach ($gets as $get) {
-            $price += $get->total_price;
-        };
+            $price += $get['total_price'];
+        }
         $order = Order::create([
-            'user_id' => $user->id,
+            'user_id' => $user->id ?? null,
             'amount_paid' => $price,
             'status' => Status::Pending,
-            'address' => $address
+            'fullname' => $firstname . " " . $lastname ?? null,
+            'town' => $town,
+            "number" => $number,
+            'address' => $address,
         ]);
-        $totalspent = $this->updatetotalspent($user, $price);
-        $this->discountController->updateStatus($user, $totalspent);
 
         if ($order) {
+
             foreach ($gets as $item) {
+
                 DB::table('order_item')->insert([
-                    'order_id'     => $order->id,
-                    'product_id'   => $item->id,
-                    'quantity'     => $item->quantity,
-                    'size'         => $item->size,
-                    'retail_price' => $item->retail_price,
-                    'total_price'  => $item->total_price,
-                    'created_at'   => now(),
-                    'updated_at'   => now(),
+                    'order_id' => $order->id,
+                    'product_id' => $item['product_id'],
+                    'quantity' => $item['quantity'],
+                    'size' => $item['size'],
+                    'retail_price' => $item['retail_price'],
+                    'total_price' => $item['total_price'],
+                    "color" => $item["color"],
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ]);
-                $i = $this->managequantity($item->id, $item->size, $item->quantity);
+                $i = $this->managequantity($item['product_id'], $item['size'], $item["color"], $item['quantity']);
             }
-            $cart->products()->detach();
+            if ($user && $get['type'] === "cart") {
+                $cart = $user->carts()->latest()->first();
 
-            $cart->delete();
-            event(new ProductPurchased($admin));
-
-
+                if (!$cart) {
+                    return response()->json(['message' => 'No active cart available for checkout'], 404);
+                }
+                $totalspent = $this->updatetotalspent($user, $price);
+                $this->discountController->updateStatus($user, $totalspent);
+                $cart->products()->detach();
+                $cart->delete();
+            }
             return response()->json($i);
         }
+        return response()->json(['message' => 'Order creation failed'], 500);
     }
+
 
     private function updatetotalspent($user, $price)
     {
@@ -84,47 +177,42 @@ class PaymentController extends Controller
         return $user->total_spent;
     }
 
-    private function UpdatePhone($user, $number)
+    private function managequantity($id, $size, $color, int $quantity)
     {
-        $user->update([
-            'phone_number' => $number
-        ]);
-    }
+        $colorsize = Color::where("color", $color)
+            ->whereHasMorph("colorable", [Shoessize::class, Clothsize::class], function ($q) use ($size, $id) {
+                $q->where("size", $size)
+                    ->where("product_id", $id);
+            })
+            ->first();
 
-
-
-
-
-
-
-    private function managequantity($id, $size, $quantity)
-    {
-        $product = Product::with('clothsize.quantities')->where('id', $id)->first();
-
-        if ($product) {
-            $clothsize = $product->clothsize->where('size', $size)->first();
-
-            if ($clothsize) {
-                $currentquantity = $clothsize->quantities()->first();
-
-                if ($currentquantity && $currentquantity->quantity == 0) {
-                    $clothsize->delete();
-                }
-
-                if ($currentquantity && $currentquantity->quantity >= $quantity) {
-                    $currentquantity->update([
-                        'quantity' => $currentquantity->quantity - $quantity
-                    ]);
-
-                    if ($currentquantity->quantity == 0) {
-                        $clothsize->delete();
-                    }
-
-                    return "transaction ended succesfully";
-                }
-            }
-            return 'Size not found';
+        if (!$colorsize) {
+            return response()->json(["error" => "Color and size combination not found"], 404);
         }
-        return 'Product not found';
+
+        $newquantity = $colorsize->quantity - $quantity;
+
+        if ($newquantity < 1) {
+            $colorsize->delete();
+        } else {
+            $colorsize->update(["quantity" => $newquantity]);
+        }
+
+        $sizeExist = Color::whereHasMorph("colorable", [Shoessize::class, Clothsize::class], function ($q) use ($size, $id) {
+            $q->where("size", $size)
+                ->where("product_id", $id);
+        })->exists();
+
+        if (!$sizeExist) {
+            Shoessize::where("size", $size)->where("product_id", $id)->delete();
+            Clothsize::where("size", $size)->where("product_id", $id)->delete();
+        }
+
+        $otherSizesExist = Shoessize::where("product_id", $id)->exists() || Clothsize::where("product_id", $id)->exists();
+
+        $product = Product::find($id);
+        if (!$otherSizesExist && $product) {
+            $product->update(["active" => 0]);
+        }
     }
 }

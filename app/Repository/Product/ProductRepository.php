@@ -85,7 +85,6 @@ class ProductRepository implements ProductRepositoryInterface
             ->where('id', $id)
             ->first();
         $this->productHelper->transformSingleProduct($product, $user);
-
         return $product;
     }
     public function similarproducts($id, $user)
@@ -119,31 +118,35 @@ class ProductRepository implements ProductRepositoryInterface
 
             $sizes = $request->input('size', []);
             $quantities = $request->input('quantity', []);
+            $colors = $request->input('color', []);
             if ($request->size_type === "numeric") {
                 foreach ($sizes as $index => $size) {
                     $numeric_size = Shoessize::create([
                         'size' => $size,
                         'product_id' => $product->id,
                     ]);
-                    $numeric_size->quantities()->create([
-                        'quantity' => $quantities[$index],
-                    ]);
+                    foreach ($colors[$index] as $colorindex => $color) {
+                        $numeric_size->colors()->create([
+                            'color' => $color,
+                            'quantity' => $quantities[$index][$colorindex],
+                        ]);
+                    }
                 }
             } elseif ($request->size_type === "letter-based") {
 
                 foreach ($sizes as $index => $size) {
-                    $letterbased = Clothsize::create([
+                    $cloth_size = Clothsize::create([
                         'size' => $size,
                         'product_id' => $product->id,
                     ]);
-                    $letterbased->quantities()->create([
-                        'quantity' => $quantities[$index],
-                    ]);
+                    foreach ($colors[$index] as $colorindex => $color) {
+                        $cloth_size->colors()->create([
+                            'color' => $color,
+                            'quantity' => $quantities[$index][$colorindex],
+                        ]);
+                    }
                 }
             }
-
-
-
             $product->addMultipleMediaFromRequest(['images'])
                 ->each(function ($fileAdder) {
                     $fileAdder->toMediaCollection();

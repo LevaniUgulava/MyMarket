@@ -33,21 +33,7 @@ class ProductResource extends JsonResource
             'description' => $this->description,
             'price' => $this->price,
             'size_type' => $this->size_type,
-            'size' => $this->clothsize->isNotEmpty()
-                ? $this->clothsize->map(function ($size) {
-                    return [
-                        'size' => $size->size,
-                        'quantity' => $size->quantities->isNotEmpty() ? $size->quantities->first()->quantity : null
-                    ];
-                })
-                : ($this->shoesize->isNotEmpty()
-                    ? $this->shoesize->map(function ($size) {
-                        return [
-                            'size' => $size->size,
-                            'quantity' => $size->quantities->isNotEmpty() ? $size->quantities->first()->quantity : null
-                        ];
-                    })
-                    : null),
+            'size' => $this->getSizeData(),
             'discount' => $this->discount,
             'discountstatus' => $this->discountstatus,
             'discountprice' => $this->discountprice,
@@ -64,5 +50,38 @@ class ProductResource extends JsonResource
             'MyRate' => (float)$this->MyRate
 
         ];
+    }
+
+    protected function getSizeData()
+    {
+        if ($this->clothsize->isNotEmpty()) {
+            return $this->clothsize->map(function ($size) {
+                return [
+                    'size' => $size->size,
+                    'details' => $size->colors->map(function ($color) {
+                        return [
+                            'color' => $color->color,
+                            'quantity' => $color->quantity
+                        ];
+                    }),
+                ];
+            });
+        }
+        if ($this->shoesize->isNotEmpty()) {
+            return $this->shoesize->map(function ($size) {
+                return [
+                    'size' => $size->size,
+                    'details' => $size->colors->map(function ($color) {
+                        return [
+                            'color' => $color->color,
+                            'quantity' => $color->quantity
+                        ];
+                    }),
+                ];
+            });
+        }
+
+
+        return null;
     }
 }

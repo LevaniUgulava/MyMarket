@@ -36,7 +36,6 @@ class ProductHelper
             }
             unset($product->media);
 
-
             return $product;
         });
     }

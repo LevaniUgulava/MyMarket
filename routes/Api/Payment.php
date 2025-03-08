@@ -21,7 +21,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+Route::post('/checkout', [PaymentController::class, 'checkout']);
 
-Route::middleware(['auth:sanctum', 'verified'])->group(function () {
-    Route::get('/checkout', [PaymentController::class, 'checkout']);
-});
+Route::post('/temporder', [PaymentController::class, 'Temporder']);
+Route::get('/get/temporder', [PaymentController::class, 'getTemporder']);
+Route::delete('delete/temporder', [PaymentController::class, 'deleteTempOrder']);

@@ -42,8 +42,6 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
 
-
-
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -94,7 +92,17 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Cart::class)
             ->join('cart_item', 'cart.id', '=', 'cart_item.cart_id')
             ->join('products', 'products.id', '=', 'cart_item.product_id')
-            ->select('products.*', 'cart_item.quantity', 'cart_item.retail_price', 'cart_item.size', 'cart_item.total_price');
+            ->select(
+                'products.id',
+                'products.name',
+                "products.price",
+                "products.discountprice",
+                'cart_item.quantity',
+                'cart_item.retail_price',
+                'cart_item.size',
+                'cart_item.color',
+                'cart_item.total_price'
+            );
     }
 
 

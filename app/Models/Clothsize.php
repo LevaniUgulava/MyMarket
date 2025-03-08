@@ -36,4 +36,9 @@ class Clothsize extends Model
     {
         return $this->morphMany(Quantity::class, 'quantifiable');
     }
+
+    public function colors()
+    {
+        return $this->morphMany(Color::class, 'colorable');
+    }
 }

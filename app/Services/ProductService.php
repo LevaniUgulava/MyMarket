@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Product;
-
 class ProductService
 {
     public function getSize($product, $size)
@@ -13,7 +11,7 @@ class ProductService
             $shoesize = $product->shoesize->where('size', $size)->first();
             $size = $clothsize ?? $shoesize;
             if ($size) {
-                $fullquantity = $size->quantities()->first()->quantity;
+                $fullquantity = $size->colors()->first()->quantity;
                 return $fullquantity;
             }
         }

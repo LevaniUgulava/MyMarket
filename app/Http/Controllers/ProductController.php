@@ -30,14 +30,28 @@ class ProductController extends Controller
         $price1 = $request->query('min', '');
         $price2 = $request->query('max', '');
 
-        $pagination = $request->get('perPage', 25);
+        $pagination = $request->get('perPage', 24);
 
         $result = [];
         foreach ($section as $s) {
             $products = $this->productRepository->display($name, $maincategoryid, $categoryid, $subcategoryid, $pagination, $user, $s, $lang, $price1, $price2);
-            $result[$s] = $products->map(function ($product) use ($user) {
-                return new ProductResource($product, $user);
-            });
+            $result[$s] = [
+                'data' => $products->map(fn($product) => new ProductResource($product, $user)),
+                'meta' => [
+                    'total' => $products->total(),
+                    'per_page' => $products->perPage(),
+                    'current_page' => $products->currentPage(),
+                    'last_page' => $products->lastPage(),
+                    'next_page_url' => $products->nextPageUrl(),
+                    'prev_page_url' => $products->previousPageUrl(),
+                ],
+                'links' => [
+                    'first' => $products->url(1),
+                    'last' => $products->url($products->lastPage()),
+                    'next' => $products->nextPageUrl(),
+                    'prev' => $products->previousPageUrl(),
+                ]
+            ];
         }
 
         return response()->json($result);
