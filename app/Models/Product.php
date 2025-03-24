@@ -33,24 +33,33 @@ class Product extends Model implements HasMedia
         return $query;
     }
 
-    public function scopeSearchmain($query, $maincategoryid)
+    public function scopeSearchmain($query, $maincategoryids)
     {
-        if ($maincategoryid) {
-            return $query->where('maincategory_id', $maincategoryid);
+        if ($maincategoryids) {
+            $maincategoryid = array_map('intval', explode(",", $maincategoryids));
+            return $query->whereIn('maincategory_id', $maincategoryid);
         }
     }
-    public function scopeSearchcategory($query, $categoryid)
+
+
+    public function scopeSearchcategory($query, $categoryids)
     {
-        if ($categoryid) {
-            return $query->where('category_id', $categoryid);
+        if ($categoryids) {
+            $catids = array_map("intval", explode(",", $categoryids));
+            return $query->whereIn('category_id', $catids);
         }
     }
-    public function scopeSearchsubcategory($query, $subcategoryid)
+
+
+    public function scopeSearchsubcategory($query, $subcategoryids)
     {
-        if ($subcategoryid) {
-            return $query->where('subcategory_id', $subcategoryid);
+        if ($subcategoryids) {
+            $subids = array_map("intval", explode(",", $subcategoryids));
+            return $query->whereIn('subcategory_id', $subids);
         }
     }
+
+
 
     public function scopeSection($query, $user, $section)
     {
@@ -66,10 +75,6 @@ class Product extends Model implements HasMedia
                     });
                 }
             });
-        } elseif ($section === "highrate") {
-            $query
-                ->having('rateproduct_avg_rate', '!=', 0.0)
-                ->orderBy('rateproduct_avg_rate', 'desc');
         }
         return $query;
     }

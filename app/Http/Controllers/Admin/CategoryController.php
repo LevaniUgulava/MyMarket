@@ -2,9 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ProductSize;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Clothsize;
+use App\Models\Color;
 use App\Models\Maincategory;
+use App\Models\Product;
+use App\Models\Shoessize;
 use App\Models\Subcategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -114,5 +119,47 @@ class CategoryController extends Controller
             "name" => $subcategory->name
 
         ]);
+    }
+    public function displaycolor()
+    {
+        $colors = Color::whereHasMorph(
+            "colorable",
+            [Shoessize::class, Clothsize::class]
+        )->with(
+            [
+                'colorable' => function ($query) {
+                    $query->select("id", "product_id");
+                }
+            ]
+        )->select("id", "color", "colorable_id", "colorable_type")
+            ->get()
+            ->map(function ($color) {
+                $product_id = $color->colorable->product_id;
+                $product = Product::select("maincategory_id", "category_id", "subcategory_id")
+                    ->findOrFail($product_id);
+
+
+                return  [
+                    "id" => $color->id,
+                    "color" => $color->color,
+                    "maincategory_id" => $product->maincategory_id,
+                    "category_id" => $product->category_id,
+                    "subcategory_id" => $product->subcategory_id,
+
+                ];
+            });
+
+
+        return response()->json($colors);
+    }
+    public function displaysize()
+    {
+        $clothsize = Clothsize::distinct()->orderByRaw("FIELD(size, 'xxs', 'xs', 's', 'm', 'l', 'xl', 'xxl')")
+            ->pluck("size");
+        $shoessize = Shoessize::distinct()
+            ->orderBy('size')
+            ->pluck('size');
+
+        return response()->json(['clothsize' => $clothsize, "shoessize" => $shoessize]);
     }
 }

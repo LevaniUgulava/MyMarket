@@ -35,6 +35,8 @@ Route::group(['prefix' => 'admin/categories', 'middleware' => ['adminpanel', 'au
 Route::get('/maincategory', [CategoryController::class, 'displaymain']);
 Route::get('/category', [CategoryController::class, 'displaycategory']);
 Route::get('/subcategory', [CategoryController::class, 'displaysub']);
+Route::get('/colors', [CategoryController::class, 'displaycolor']);
+Route::get('/sizes', [CategoryController::class, 'displaysize']);
 
 Route::get('/maincategory/{id}', [CategoryController::class, 'Maincategorybyid']);
 Route::get('/category/{id}', [CategoryController::class, 'categorybyid']);

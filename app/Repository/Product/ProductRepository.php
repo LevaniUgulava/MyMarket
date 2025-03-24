@@ -19,14 +19,14 @@ class ProductRepository implements ProductRepositoryInterface
     {
         $this->productHelper = $productHelper;
     }
-    public function display($name, $maincategoryid, $categoryid, $subcategoryid, $pagination, $user, $section, $lang, $price1, $price2)
+    public function display($name, $maincategoryids, $categoryids, $subcategoryids, $pagination, $user, $section, $lang, $price1, $price2)
     {
         $products = Product::query()->withAvg('rateproduct', 'rate')
             ->with(['Maincategory:id,name', 'Category:id,name', 'Subcategory:id,name', 'eligibleStatuses'])
             ->when($name, fn($query) => $query->searchname($name))
-            ->when($maincategoryid, fn($query) => $query->searchmain($maincategoryid))
-            ->when($categoryid, fn($query) => $query->searchcategory($categoryid))
-            ->when($subcategoryid, fn($query) => $query->searchsubcategory($subcategoryid))
+            ->when($maincategoryids, fn($query) => $query->searchmain($maincategoryids))
+            ->when($categoryids, fn($query) => $query->searchcategory($categoryids))
+            ->when($subcategoryids, fn($query) => $query->searchsubcategory($subcategoryids))
             ->when($section, fn($query) => $query->section($user, $section))
             ->when($price1 || $price2, fn($query) => $query->price($price1, $price2))
             ->where('active', 1)

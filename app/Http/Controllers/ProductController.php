@@ -22,19 +22,18 @@ class ProductController extends Controller
     {
         $user = auth('sanctum')->user();
         $name = $request->query('searchname', '');
-        $maincategoryid = $request->query('maincategory', '');
-        $categoryid = $request->query('category', '');
-        $subcategoryid = $request->query('subcategory', '');
+        $maincategoryids = $request->query('maincategory', '');
+        $categoryids = $request->query('category', '');
+        $subcategoryids = $request->query('subcategory', '');
         $section = (array)$request->query('section', []);
-        $lang = $request->query('lang', '');
         $price1 = $request->query('min', '');
         $price2 = $request->query('max', '');
 
-        $pagination = $request->get('perPage', 24);
+        $pagination = $request->get('perPage', 16);
 
         $result = [];
         foreach ($section as $s) {
-            $products = $this->productRepository->display($name, $maincategoryid, $categoryid, $subcategoryid, $pagination, $user, $s, $lang, $price1, $price2);
+            $products = $this->productRepository->display($name, $maincategoryids, $categoryids, $subcategoryids, $pagination, $user, $s, null, $price1, $price2);
             $result[$s] = [
                 'data' => $products->map(fn($product) => new ProductResource($product, $user)),
                 'meta' => [
@@ -73,12 +72,12 @@ class ProductController extends Controller
 
     public function notactive($id)
     {
-        $products = $this->productRepository->notactive($id);
+        $this->productRepository->notactive($id);
         return response()->json(['message' => 'yes']);
     }
     public function active($id)
     {
-        $products = $this->productRepository->active($id);
+        $this->productRepository->active($id);
         return response()->json(['message' => 'yes']);
     }
 
