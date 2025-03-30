@@ -114,6 +114,7 @@ class ProductRepository implements ProductRepositoryInterface
                 'maincategory_id' => $request->maincategory_id,
                 'category_id' => $request->category_id,
                 'subcategory_id' => $request->subcategory_id,
+                'additionalinfo' => $request->additionalinfo
             ]);
 
             $sizes = $request->input('size', []);

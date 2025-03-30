@@ -40,6 +40,7 @@ class ProductResource extends JsonResource
             'MainCategory' => $this->MainCategory,
             'Category' => $this->Category,
             'SubCategory' => $this->Subcategory,
+            'additionalinfo' => $this->additionalinfo,
             'image_urls' => $this->getMedia('default')->map(function ($media) {
                 return url('storage/' . $media->id . '/' . $media->file_name);
             }),
