@@ -2,9 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\ProductSize;
-use App\Observers\ProductLoggerObserver;
-use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
@@ -95,6 +93,36 @@ class Product extends Model implements HasMedia
         }
         return $query;
     }
+    function scopeSize($query, $sizes)
+    {
+        $sizesmap = explode(",", $sizes);
+        return $query->where(function ($query) use ($sizesmap) {
+            $query->whereHas('shoesize', function ($query) use ($sizesmap) {
+                $query->whereIn("size", $sizesmap);
+            })
+                ->orWhereHas('clothsize', function ($query) use ($sizesmap) {
+                    $query->whereIn("size", $sizesmap);
+                });
+        });
+    }
+
+    public function scopeColor($query, $colors)
+    {
+        $colorsmap = explode(",", $colors);
+        return $query->where(function ($query) use ($colorsmap) {
+            $query->whereHas('shoesize', function ($query) use ($colorsmap) {
+                $query->whereHas('colors', function ($query) use ($colorsmap) {
+                    $query->where('color', $colorsmap);
+                });
+            })
+                ->orWhereHas('clothsize', function ($query) use ($colorsmap) {
+                    $query->whereHas('colors', function ($query) use ($colorsmap) {
+                        $query->where('color', $colorsmap);
+                    });
+                });
+        });
+    }
+
 
 
     public function Category()

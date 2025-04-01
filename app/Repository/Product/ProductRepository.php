@@ -19,8 +19,9 @@ class ProductRepository implements ProductRepositoryInterface
     {
         $this->productHelper = $productHelper;
     }
-    public function display($name, $maincategoryids, $categoryids, $subcategoryids, $pagination, $user, $section, $lang, $price1, $price2)
+    public function display($name, $maincategoryids, $categoryids, $subcategoryids, $pagination, $user, $section, $lang, $price1, $price2, $colors, $sizes)
     {
+
         $products = Product::query()->withAvg('rateproduct', 'rate')
             ->with(['Maincategory:id,name', 'Category:id,name', 'Subcategory:id,name', 'eligibleStatuses'])
             ->when($name, fn($query) => $query->searchname($name))
@@ -29,6 +30,8 @@ class ProductRepository implements ProductRepositoryInterface
             ->when($subcategoryids, fn($query) => $query->searchsubcategory($subcategoryids))
             ->when($section, fn($query) => $query->section($user, $section))
             ->when($price1 || $price2, fn($query) => $query->price($price1, $price2))
+            ->when($sizes, fn($query) => $query->size($sizes))
+            ->when($colors, fn($query) => $query->color($colors))
             ->where('active', 1)
             ->paginate($pagination);
 

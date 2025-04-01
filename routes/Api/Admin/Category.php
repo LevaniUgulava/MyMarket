@@ -30,6 +30,14 @@ Route::group(['prefix' => 'admin/categories', 'middleware' => ['adminpanel', 'au
 
         Route::post('/subcategory/create', [CategoryController::class, 'Subcategory']);
         Route::post('/subcategory/delete/{id}', [CategoryController::class, 'Subcategorydelete']);
+
+        Route::get('/admin/category', [CategoryController::class, 'displayadmincategory']);
+
+        Route::post("/assignRelation", [CategoryController::class, "assignMainRelation"]);
+        Route::post("/deleteRelation", [CategoryController::class, "deleteMainRelation"]);
+
+        Route::post("/assignCategoryRelation", [CategoryController::class, "assignCategoryRelation"]);
+        Route::post("/deleteCategoryRelation", [CategoryController::class, "deleteCategoryRelation"]);
     });
 });
 Route::get('/maincategory', [CategoryController::class, 'displaymain']);

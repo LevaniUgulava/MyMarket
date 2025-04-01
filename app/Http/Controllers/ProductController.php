@@ -28,12 +28,14 @@ class ProductController extends Controller
         $section = (array)$request->query('section', []);
         $price1 = $request->query('min', '');
         $price2 = $request->query('max', '');
+        $sizes = $request->query('sizes');
+        $colors = $request->query('colors');
 
         $pagination = $request->get('perPage', 16);
 
         $result = [];
         foreach ($section as $s) {
-            $products = $this->productRepository->display($name, $maincategoryids, $categoryids, $subcategoryids, $pagination, $user, $s, null, $price1, $price2);
+            $products = $this->productRepository->display($name, $maincategoryids, $categoryids, $subcategoryids, $pagination, $user, $s, null, $price1, $price2, $colors, $sizes);
             $result[$s] = [
                 'data' => $products->map(fn($product) => new ProductResource($product, $user)),
                 'meta' => [

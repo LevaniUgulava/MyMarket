@@ -18,9 +18,24 @@ class CategoryController extends Controller
 {
     public function displaymain()
     {
-        $maincategory = Maincategory::select('id', 'name')->get();
-        return $maincategory;
+        $maincategory = Maincategory::with('Categories')->select('id', 'name')->get();
+
+        $mappedmaincategory = $maincategory->map(function ($category) {
+            return [
+                "id" => $category->id,
+                "name" => $category->name,
+                "categories" => $category->categories->map(function ($category) {
+                    return [
+                        "id" => $category->id,
+                        "name" => $category->name,
+                    ];
+                })
+            ];
+        });
+
+        return $mappedmaincategory;
     }
+
 
     public function Maincategory(Request $request)
     {
@@ -49,17 +64,86 @@ class CategoryController extends Controller
         ]);
     }
 
+
     public function displaycategory()
     {
-        $Category = Category::with('Maincategory')->get();
-        return $Category;
+        $categories = Category::with(['Maincategories' => function ($query) {
+            $query->select('maincategories.id');
+        }])->select("id", "name")->get();
+
+        $mappedcategory = $categories->map(function ($category) {
+            return [
+                "id" => $category->id,
+                "name" => $category->name,
+                "maincategory_id" => $category->maincategories->pluck("id")->toArray(),
+
+            ];
+        });
+
+        return $mappedcategory;
     }
+    public function displayadmincategory()
+    {
+        $categories = Category::with(['Subcategories' => function ($query) {
+            $query->select('subcategories.id', 'subcategories.name');
+        }])->select('id', 'name')->get();
+
+        $mappedcategory = $categories->map(function ($category) {
+            return [
+                "id" => $category->id,
+                "name" => $category->name,
+                "subcategories" => $category->subcategories->map(function ($subcategory) {
+                    return [
+                        "id" => $subcategory->id,
+                        "name" => $subcategory->name,
+                    ];
+                })
+            ];
+        });
+
+        return $mappedcategory;
+    }
+
+
+
+    public function assignMainRelation(Request $request)
+    {
+        $maincategory = Maincategory::findorfail($request->maincategory_id);
+        $success = $maincategory->Categories()->attach($request->category_id);
+        if ($success) {
+            return response()->json(["message" => "added relation"]);
+        }
+    }
+    public function deleteMainRelation(Request $request)
+    {
+        $maincategory = Maincategory::findorfail($request->maincategory_id);
+        $success = $maincategory->Categories()->detach($request->category_id);
+        if ($success) {
+            return response()->json(["message" => "deleted relation"]);
+        }
+    }
+    public function assignCategoryRelation(Request $request)
+    {
+        $category = Category::findorfail($request->category_id);
+        $success = $category->Subcategories()->attach($request->subcategory_id);
+        if ($success) {
+            return response()->json(["message" => "added relation"]);
+        }
+    }
+    public function deleteCategoryRelation(Request $request)
+    {
+        $category = Category::findorfail($request->category_id);
+        $success = $category->Subcategories()->detach($request->subcategory_id);
+        if ($success) {
+            return response()->json(["message" => " relation"]);
+        }
+    }
+
 
     public function category(Request $request)
     {
         Category::create([
             'name' => $request->name,
-            'maincategory_id' => $request->maincategory_id
         ]);
         return response()->json([
             'message' => 'Category Added',
@@ -74,6 +158,7 @@ class CategoryController extends Controller
 
         ]);
     }
+
     public function categorybyid($id)
     {
         $category = Category::findorfail($id);
@@ -84,10 +169,22 @@ class CategoryController extends Controller
         ]);
     }
 
+
+
     public function displaysub()
     {
-        $Subcategory = Subcategory::with('Category', 'Maincategory')->get();
-        return $Subcategory;
+        $subcategories = Subcategory::with(['Categories' => function ($q) {
+            $q->select("categories.id", "categories.name");
+        }])->select("id", "name")->get();
+
+        $mappedsubcategory = $subcategories->map(function ($subcategory) {
+            return [
+                "id" => $subcategory->id,
+                "name" => $subcategory->name,
+                "category_id" => $subcategory->categories->pluck("id")->toArray()
+            ];
+        });
+        return $mappedsubcategory;
     }
 
     public function Subcategory(Request $request)
@@ -120,6 +217,10 @@ class CategoryController extends Controller
 
         ]);
     }
+
+
+
+
     public function displaycolor()
     {
         $colors = Color::whereHasMorph(
@@ -147,7 +248,9 @@ class CategoryController extends Controller
                     "subcategory_id" => $product->subcategory_id,
 
                 ];
-            });
+            })->unique(function ($item) {
+                return $item['color'];
+            })->values();
 
 
         return response()->json($colors);

@@ -9,9 +9,10 @@ class Subcategory extends Model
 {
     use HasFactory;
     protected $guarded = [];
-    public function Category()
+
+    public function Categories()
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsToMany(Category::class, "category_subcategory");
     }
     public function Products()
     {

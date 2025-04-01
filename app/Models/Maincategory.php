@@ -17,7 +17,7 @@ class Maincategory extends Model
     }
     public function Categories()
     {
-        return $this->hasMany(Category::class);
+        return $this->belongsToMany(Category::class, "maincategory_category");
     }
 
     public function Products()

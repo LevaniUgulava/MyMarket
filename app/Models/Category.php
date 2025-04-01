@@ -9,19 +9,19 @@ class Category extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'maincategory_id'];
+    protected $fillable = ['name'];
 
-    public function Subcategory()
+    public function Subcategories()
     {
-        return $this->hasMany(Subcategory::class);
+        return $this->belongsToMany(Subcategory::class, "category_subcategory");
     }
     public function Products()
     {
         return $this->hasMany(Product::class);
     }
 
-    public function Maincategory()
+    public function Maincategories()
     {
-        return $this->belongsTo(Maincategory::class);
+        return $this->belongsToMany(Maincategory::class, "maincategory_category");
     }
 }
