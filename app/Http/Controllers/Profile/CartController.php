@@ -191,7 +191,6 @@ class CartController extends Controller
     public function updatequantity($id, $action, Request $request, ProductService $productService)
     {
 
-
         $user = Auth::user();
         $data = $user->cartItems()->where('product_id', $id)->where('size', $request->size)->first();
 

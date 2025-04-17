@@ -22,6 +22,7 @@ return new class extends Migration
             $table->unsignedBigInteger('maincategory_id');
             $table->unsignedBigInteger('category_id');
             $table->unsignedBigInteger('subcategory_id')->nullable();
+            $table->json("additionalinfo")->nullable();
             $table->boolean('active')->default(1);
 
 

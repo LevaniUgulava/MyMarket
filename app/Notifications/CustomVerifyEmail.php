@@ -12,13 +12,14 @@ use Illuminate\Support\Facades\URL;
 class CustomVerifyEmail extends Notification
 {
     use Queueable;
+    protected $token;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct()
+    public function __construct($token)
     {
-        //
+        $this->token = $token;
     }
 
     /**
@@ -36,18 +37,9 @@ class CustomVerifyEmail extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $temporarySignedUrl = URL::temporarySignedRoute(
-            'verification.verify',
-            Carbon::now()->addMinutes(60),
-            ['id' => $notifiable->getKey()]
-        );
-
-        $frontendUrl = 'http://localhost:8080/ka/email-verify/' . $notifiable->getKey() . '?' . parse_url($temporarySignedUrl, PHP_URL_QUERY);
 
         return (new MailMessage)
-            ->line('The introduction to the notification.')
-            ->action('Verification', $frontendUrl)
-            ->line('Thank you for using our application!');
+            ->line('ვერიფიკაციის კოდი  ' . $this->token);
     }
 
     /**

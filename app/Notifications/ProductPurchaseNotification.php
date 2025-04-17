@@ -10,13 +10,15 @@ use Illuminate\Notifications\Notification;
 class ProductPurchaseNotification extends Notification
 {
     use Queueable;
+    public $orders;
+
 
     /**
      * Create a new notification instance.
      */
-    public function __construct()
+    public function __construct($orders)
     {
-        //
+        $this->orders = $orders;
     }
 
     /**
@@ -35,8 +37,10 @@ class ProductPurchaseNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->line('the purchase created check adminpanel')
-            ->line('Thank you for using our application!');
+            ->subject('Your Purchase Confirmation')
+            ->view('emails.purchase', [
+                'orders' => $this->orders,  // Pass the products data to the view
+            ]);
     }
 
     /**

@@ -122,6 +122,13 @@ class Product extends Model implements HasMedia
                 });
         });
     }
+    public function scopeBrand($query, $brands)
+    {
+        $brandsmap = explode(",", $brands);
+        return $query->whereHas("brands", function ($query) use ($brandsmap) {
+            $query->whereIn('brand_id', $brandsmap);
+        });
+    }
 
 
 
@@ -188,6 +195,10 @@ class Product extends Model implements HasMedia
     public function collections()
     {
         return $this->belongsToMany(Collection::class, 'collection_product')->withTimestamps();
+    }
+    public function brands()
+    {
+        return $this->belongsToMany(Brand::class, 'product_brand');
     }
 
     public function eligibleStatuses()

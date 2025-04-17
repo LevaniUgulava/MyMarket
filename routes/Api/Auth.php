@@ -30,10 +30,12 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/admin/login', [AuthController::class, 'adminlogin'])->name('admin.login');
 Route::post('auth/facebook', [FacebookController::class, 'authenticate']);
 Route::post('google/callback', [GoogleController::class, 'callback']);
-Route::get('/email/verify/{id}', [AuthController::class, 'verify'])->middleware(['signed'])->name("verification.verify");
-
+Route::post('/email/verify', [AuthController::class, 'verify']);
+Route::post('/resend-verify', [AuthController::class, 'ResendVerification']);
 Route::group(["middleware" => "auth:sanctum"], function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/userstatuses', [AuthController::class, 'getuserstatus']);
-    Route::delete('/delete/acc', [AuthController::class, 'deleteAcc']);
+    Route::post('/delete/acc', [AuthController::class, 'deleteAcc']);
+    Route::post('/send-deactivation-email', [AuthController::class, 'SendDeactivationCode']);
+    Route::post('/verify-deactivation-code', [AuthController::class, 'verifyDeactivationCode']);
 });

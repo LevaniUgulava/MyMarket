@@ -13,14 +13,14 @@ class ForgetPassword extends Notification
 {
     use Queueable;
 
-    private $token;
+    private $otp;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct($token)
+    public function __construct($otp)
     {
-        $this->token = $token;
+        $this->otp = $otp;
     }
 
     /**
@@ -39,10 +39,9 @@ class ForgetPassword extends Notification
     public function toMail(object $notifiable): MailMessage
     {
 
-        $frontendUrl = 'http://localhost:8080/reset/password/' . $notifiable->id . '?token=' . $this->token;
         return (new MailMessage)
             ->line('The introduction to the notification.')
-            ->action('reset password', $frontendUrl)
+            ->line('reset password' . $this->otp)
             ->line('Thank you for using our application!');
     }
 

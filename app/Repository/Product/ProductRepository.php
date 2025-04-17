@@ -7,6 +7,7 @@ use App\Helpers\Translator;
 use App\Models\Clothsize;
 use App\Models\Product;
 use App\Models\Shoessize;
+use App\Repository\Brand\BrandRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -15,11 +16,13 @@ use Illuminate\Support\Facades\Log;
 class ProductRepository implements ProductRepositoryInterface
 {
     private $productHelper;
-    public function __construct(ProductHelper $productHelper)
+    protected $brandRepository;
+    public function __construct(ProductHelper $productHelper, BrandRepositoryInterface $brandRepository)
     {
         $this->productHelper = $productHelper;
+        $this->brandRepository = $brandRepository;
     }
-    public function display($name, $maincategoryids, $categoryids, $subcategoryids, $pagination, $user, $section, $lang, $price1, $price2, $colors, $sizes)
+    public function display($name, $maincategoryids, $categoryids, $subcategoryids, $pagination, $user, $section, $lang, $price1, $price2, $colors, $sizes, $brands)
     {
 
         $products = Product::query()->withAvg('rateproduct', 'rate')
@@ -32,6 +35,7 @@ class ProductRepository implements ProductRepositoryInterface
             ->when($price1 || $price2, fn($query) => $query->price($price1, $price2))
             ->when($sizes, fn($query) => $query->size($sizes))
             ->when($colors, fn($query) => $query->color($colors))
+            ->when($brands, fn($query) => $query->brand($brands))
             ->where('active', 1)
             ->paginate($pagination);
 
@@ -93,10 +97,11 @@ class ProductRepository implements ProductRepositoryInterface
     public function similarproducts($id, $user)
     {
         $product = Product::where('id', $id)->first();
+
         $categoryid = $product->category_id;
-        $products = Product::where('id', '!=', '$id')
+
+        $products = Product::where('id', '!=', $id)
             ->where('category_id', $categoryid)
-            ->withAvg('rateproduct', 'rate')
             ->inRandomOrder()
             ->limit(10)
             ->get();
@@ -117,7 +122,7 @@ class ProductRepository implements ProductRepositoryInterface
                 'maincategory_id' => $request->maincategory_id,
                 'category_id' => $request->category_id,
                 'subcategory_id' => $request->subcategory_id,
-                'additionalinfo' => $request->additionalinfo
+                'additionalinfo' => $request->additionalinfo,
             ]);
 
             $sizes = $request->input('size', []);
@@ -156,6 +161,7 @@ class ProductRepository implements ProductRepositoryInterface
                     $fileAdder->toMediaCollection();
                 });
 
+            $this->brandRepository->ProductRelation($product->id, $request->brand_id);
 
             return true;
         } catch (\Exception $e) {

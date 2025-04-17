@@ -27,18 +27,15 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::post('/profile/update/password', [ProfileController::class, 'Updatepassword']);
     Route::get('/getprofile', [ProfileController::class, 'getprofile']);
     Route::get('/likeproduct', [ProfileController::class, 'likeproduct']);
-    Route::post('/resend/verification', [ProfileController::class, 'resendverification']);
-
-
 
 
     Route::post('/like/{id}', [CartController::class, 'Like']);
     Route::post('/unlike/{id}', [CartController::class, 'unLike']);
 
 
-
     Route::post('/products/addcart/{id}', [CartController::class, 'addcart']);
     Route::get('/products/totalmount', [CartController::class, 'full']);
 });
 Route::post('/forget/password', [ProfileController::class, 'ResetPassword']);
-Route::post('/reset/password/{id}', [ProfileController::class, 'ForgotPassword']);
+Route::post('/reset/password', [ProfileController::class, 'ForgotPassword']);
+Route::post('/checkotp', [ProfileController::class, 'checkOtp']);

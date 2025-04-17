@@ -32,7 +32,7 @@ Route::get('/Searchcategory/{id}', [ProductController::class, 'filterbycategory'
 
 Route::group(['middleware' => ['auth:sanctum', 'adminpanel']], function () {
     Route::get('/admindisplay', [ProductController::class, 'admindisplay']);
-    Route::post('/addproduct', [ProductController::class, 'create'])->middleware('auth:sanctum');
+    Route::post('/addproduct', [ProductController::class, 'create']);
     Route::post('/notactive/{id}', [ProductController::class, 'notactive']);
     Route::post('/active/{id}', [ProductController::class, 'active']);
     Route::post('/discount', [ProductController::class, 'setdiscount']);

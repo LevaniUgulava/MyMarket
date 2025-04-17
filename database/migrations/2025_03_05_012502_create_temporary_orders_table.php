@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('temporary_orders', function (Blueprint $table) {
             $table->id();
             $table->integer("user_id")->nullable();
-            $table->string("guest_token");
+            $table->string("guest_token")->nullable();
             $table->integer("quantity");
             $table->string("name");
             $table->integer("product_id");

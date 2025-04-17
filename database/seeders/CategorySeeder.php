@@ -19,13 +19,10 @@ class CategorySeeder extends Seeder
             "name" => "ქალი"
         ]);
         Category::create([
-            "name" => "კაბა",
-            "maincategory_id" => 1
+            "name" => "ტანსაცმელი",
         ]);
         Subcategory::create([
             "name" => "კაბა",
-            "category_id" => 1,
-            "maincategory_id" => 1
         ]);
     }
 }

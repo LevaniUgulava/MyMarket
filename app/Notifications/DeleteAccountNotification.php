@@ -10,13 +10,14 @@ use Illuminate\Notifications\Notification;
 class DeleteAccountNotification extends Notification
 {
     use Queueable;
+    protected $token;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct()
+    public function __construct($token)
     {
-        //
+        $this->token = $token;
     }
 
     /**
@@ -35,8 +36,7 @@ class DeleteAccountNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->line('The account is deleted')
-            ->line('Thank you for using our application!');
+            ->line('დეაქტივაციის კოდი' . $this->token);
     }
 
     /**

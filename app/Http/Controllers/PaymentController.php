@@ -13,9 +13,13 @@ use App\Models\Quantity;
 use App\Models\Shoessize;
 use App\Models\TemporaryOrder;
 use App\Models\User;
+use App\Models\Userstatus;
+use App\Notifications\ProductPurchaseNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+
+use function PHPSTORM_META\map;
 
 class PaymentController extends Controller
 {
@@ -32,7 +36,7 @@ class PaymentController extends Controller
         $user = auth('sanctum')->user();
         $request->validate([
             "products" => "required|array",
-            "products.*.guest_token" => "required|string",
+            "products.*.guest_token" => "nullable|string",
             "products.*.quantity" => "required|integer",
             "products.*.product_id" => "required|numeric",
             "products.*.type" => "required|string|max:100",
@@ -46,7 +50,7 @@ class PaymentController extends Controller
         foreach ($request->products as $item) {
             $temporder = TemporaryOrder::create([
                 "user_id" => $user->id ?? null,
-                "guest_token" => $item["guest_token"],
+                "guest_token" => $item["guest_token"] ?? null,
                 "quantity" => $item["quantity"],
                 "product_id" => $item["product_id"],
                 "size" => $item["size"],
@@ -70,11 +74,12 @@ class PaymentController extends Controller
         $guestToken = $request->header("Guest-Token");
 
         if ($user) {
-            $tempOrders = TemporaryOrder::where("user_id", $user->id)
-                ->orWhere("guest_token", $guestToken)
+            $tempOrders = TemporaryOrder::Where("user_id", $user->id)
                 ->get();
-        } else {
+        } elseif ($guestToken) {
             $tempOrders = TemporaryOrder::where("guest_token", $guestToken)->get();
+        } else {
+            return response()->json(['error' => 'User or guest token is required'], 400);
         }
 
         return response()->json($tempOrders);
@@ -82,13 +87,15 @@ class PaymentController extends Controller
     public function deleteTempOrder(Request $request)
     {
         $guestToken = $request->header("Guest-Token");
-
-        if (!$guestToken) {
-            return response()->json(["message" => "Guest token required"], 400);
+        $user = auth('sanctum')->user();
+        if ($user) {
+            $deleted = TemporaryOrder::Where("user_id", $user->id)
+                ->delete();
+        } elseif ($guestToken) {
+            $deleted = TemporaryOrder::where("guest_token", $guestToken)->delete();
+        } else {
+            return response()->json(['error' => 'User or guest token is required'], 400);
         }
-
-        $deleted = TemporaryOrder::where("guest_token", $guestToken)->delete();
-
         if ($deleted) {
             return response()->json(["message" => "Temporary order deleted"]);
         } else {
@@ -121,7 +128,7 @@ class PaymentController extends Controller
         $lastname = $request->input('lastname');
         $town = $request->input('town');
         $user = auth('sanctum')->user();
-        $gets = $request->products;
+        $gets = collect($request->input('products'));
         $price = 0;
         foreach ($gets as $get) {
             $price += $get['total_price'];
@@ -161,6 +168,7 @@ class PaymentController extends Controller
                 }
                 $totalspent = $this->updatetotalspent($user, $price);
                 $this->discountController->updateStatus($user, $totalspent);
+                $this->checkoutmail($gets, $user);
                 $cart->products()->detach();
                 $cart->delete();
             }
@@ -174,8 +182,27 @@ class PaymentController extends Controller
     {
         $user->total_spent += $price;
         $user->save();
+        $this->updatestatus($user);
         return $user->total_spent;
     }
+
+    public function updatestatus($user)
+    {
+        $totalSpent = $user->total_spent;
+
+
+        $status = Userstatus::where('toachieve', '<=', $totalSpent)
+            ->orderBy('toachieve', 'desc')
+            ->first();
+
+        if ($status) {
+            $user->userstatus_id = $status->id;
+            $user->save();
+        }
+
+        return response()->json($status);
+    }
+
 
     private function managequantity($id, $size, $color, int $quantity)
     {
@@ -214,5 +241,26 @@ class PaymentController extends Controller
         if (!$otherSizesExist && $product) {
             $product->update(["active" => 0]);
         }
+    }
+
+    public function checkoutmail($orders, $user)
+    {
+        $mappedOrder = $orders->map(function ($order) {
+            $product = Product::find($order['product_id']);
+            $image_urls = $product->getMedia('default')->map(fn($media) => $media->getUrl())->toArray();  // Convert to an array of URLs
+            return [
+                'product_id' => $order['product_id'],
+                'name' => $product->name,
+                'quantity' => $order['quantity'],
+                'size' => $order['size'],
+                'retail_price' => $order['retail_price'],
+                'total_price' => $order['total_price'],
+                'color' => $order['color'],
+                'product_image' => $image_urls,
+            ];
+        });
+
+
+        $user->notify(new ProductPurchaseNotification($mappedOrder));
     }
 }

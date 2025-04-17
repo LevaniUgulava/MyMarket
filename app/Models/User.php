@@ -33,14 +33,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'confirmation_token',
         'email_verified_at',
         'userstatus_id',
-        'phone_number'
-
     ];
-
-    protected $dispatchesEvents = [
-        'created' => EventsRegisterNotification::class
-    ];
-
 
     /**
      * The attributes that should be hidden for serialization.
@@ -124,14 +117,18 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->belongsTo(Userstatus::class);
     }
+
+
     public function getPriceByStatus($product, $price, $defaultPrice)
     {
         $this->loadMissing('userstatus');
 
-        $isEligible = $product->eligibleStatuses()->where('userstatus_id', $this->userstatus->id)->withPivot('discount')->first();
-        if ($isEligible && $this->userstatus && $isEligible->pivot->discount > 0 && $this->userstatus->isActive()) {
-            $discount = $isEligible->pivot->discount;
-            return round($price * (1 - ($discount / 100)), 2);
+        if ($this->userstatus) {
+            $isEligible = $product->eligibleStatuses()->where('userstatus_id', $this->userstatus->id)->withPivot('discount')->first();
+            if ($isEligible && $this->userstatus && $isEligible->pivot->discount > 0 && $this->userstatus->isActive()) {
+                $discount = $isEligible->pivot->discount;
+                return round($price * (1 - ($discount / 100)), 2);
+            }
         }
 
         return round($defaultPrice, 2);

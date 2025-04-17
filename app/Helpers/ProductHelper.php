@@ -13,7 +13,7 @@ class ProductHelper
             $product->image_urls = $product->getMedia('default')->map(fn($media) => $media->getUrl());
             $product->isLiked = in_array($product->id, $likedProductIds);
 
-            if ($user) {
+            if ($user && $user->userstatus_id) {
                 $isEligible =  $product->eligibleStatuses()->wherePivot('userstatus_id', $user->userstatus->id)->withPivot('discount')->first();
                 if ($isEligible && $user->userstatus->isActive()) {
                     $product->discountstatus = [
@@ -45,7 +45,7 @@ class ProductHelper
         $product->image_urls = $product->getMedia('default')->map(fn($media) => $media->getUrl());
         $product->isLiked = in_array($product->id, $likedProductIds);
 
-        if ($user) {
+        if ($user && $user->userstatus_id) {
             $isEligible = $product->eligibleStatuses()
                 ->wherePivot('userstatus_id', $user->userstatus->id)
                 ->withPivot('discount')

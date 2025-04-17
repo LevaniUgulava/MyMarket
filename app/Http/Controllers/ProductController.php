@@ -30,12 +30,14 @@ class ProductController extends Controller
         $price2 = $request->query('max', '');
         $sizes = $request->query('sizes');
         $colors = $request->query('colors');
+        $brands = $request->query('brands');
+
 
         $pagination = $request->get('perPage', 16);
 
         $result = [];
         foreach ($section as $s) {
-            $products = $this->productRepository->display($name, $maincategoryids, $categoryids, $subcategoryids, $pagination, $user, $s, null, $price1, $price2, $colors, $sizes);
+            $products = $this->productRepository->display($name, $maincategoryids, $categoryids, $subcategoryids, $pagination, $user, $s, null, $price1, $price2, $colors, $sizes, $brands);
             $result[$s] = [
                 'data' => $products->map(fn($product) => new ProductResource($product, $user)),
                 'meta' => [
@@ -132,7 +134,6 @@ class ProductController extends Controller
         $ids = $request->id;
         $discount = $request->discount;
 
-
         foreach ($ids as $id) {
             $product = Product::findOrFail($id);
             $price = $product->price;
@@ -142,13 +143,13 @@ class ProductController extends Controller
             ]);
         }
         // if ($request->send) {
-        if (true) {
-            $users = User::get();
-            foreach ($users as $user) {
-                $user->notify(new DiscountNotification($ids, $user->name, $discount));
-            }
-            $this->discountproducts($ids);
-        }
+        // if (true) {
+        //     $users = User::get();
+        //     foreach ($users as $user) {
+        //         $user->notify(new DiscountNotification($ids, $user->name, $discount));
+        //     }
+        //     $this->discountproducts($ids);
+        // }
 
         return response()->json("success");
     }

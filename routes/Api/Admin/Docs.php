@@ -1,10 +1,6 @@
 <?php
 
-use App\Http\Controllers\Admin\LoggerController;
-use App\Http\Controllers\Admin\RolesController;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\ProductController;
+use App\Http\Controllers\Admin\DocumentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -24,4 +20,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 
-Route::get('logs', [LoggerController::class, 'display']);
+// Route::get('logs', [LoggerController::class, 'display']);
+Route::get('/doc/', [DocumentController::class, 'displayDoc']);
+Route::group(["prefix" => "doc"], function () {
+    Route::get('/display', [DocumentController::class, 'displayDoc']);
+    Route::post('/create', [DocumentController::class, 'createDoc']);
+});

@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->integer('phone_number')->nullable();
             $table->string('facebook_id')->nullable();
             $table->string('google_id')->nullable();
             $table->unsignedBigInteger('userstatus_id')->nullable();

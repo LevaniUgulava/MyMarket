@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Notifications\CustomVerifyEmail;
 use App\Notifications\ForgetPassword;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -62,7 +63,8 @@ class ProfileController extends Controller
         $user = Auth::user();
 
         return response()->json([
-            'user' => $user
+            'user' => $user,
+            "isVerified" => $user->hasVerifiedEmail()
         ]);
     }
     public function likeproduct()
@@ -97,94 +99,121 @@ class ProfileController extends Controller
         return ProductResource::collection($products);
     }
 
-    public function resendverification()
-    {
-        $user = Auth::user();
-        $user->notify(new CustomVerifyEmail());
-        return response()->json([
-            "verification" => [
-                'ka' => 'ვერიფიკაციის მეილი გაგზავნილია',
-                'en' => "Verification Mail is Sent"
-            ]
-        ]);
-    }
 
     public function ResetPassword(Request $request)
     {
         $request->validate([
-            "email" => "required|email|max:255"
+            "email" => [
+                "required",
+                "email",
+                "max:255",
+                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|net|org)$/'
+            ]
         ]);
+
         $user = User::where("email", $request->email)->first();
 
         if ($user) {
-            $token = Str::random(30);
+            $otp = str_pad(mt_rand(0, 99999999), 8, '0', STR_PAD_LEFT);
 
             DB::table('password_reset_tokens')->updateOrInsert(
                 ['email' => $user->email],
                 [
-                    'token' => $token,
+                    'token' => $otp,
                     'created_at' => now()
                 ]
             );
-            $user->notify(new ForgetPassword($token));
+            $user->notify(new ForgetPassword($otp));
             return response()->json([
                 "message" => [
                     "success" => true,
                     'messagekey' => "MailSented"
                 ]
-            ]);
+            ], 200);
         }
         return response()->json([
             "message" => [
                 "success" => false,
                 'messagekey' => "UsernotExist"
             ]
+        ], 500);
+    }
+    public function checkOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'otp' => 'required|numeric|digits:8',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'messagekey' => 'UserNotFound',
+            ], 404);
+        }
+        $record = DB::table('password_reset_tokens')
+            ->where('email', $user->email)
+            ->where('token', $request->otp)
+            ->first();
+
+        if (!$record) {
+            return response()->json([
+                'success' => false,
+                'messagekey' => 'InvalidToken',
+            ], 400);
+        }
+
+        if (Carbon::parse($record->created_at)->addMinutes(10)->isPast()) {
+            return response()->json([
+                'success' => false,
+                'messagekey' => 'TokenExpired',
+            ], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'messagekey' => 'TokenValid',
         ]);
     }
 
-    public function ForgotPassword(Request $request, $id)
+
+    public function ForgotPassword(Request $request)
     {
         $request->validate([
-            "password" => "required|string|max:255"
+            "password" => "required|string|min:8|max:255",
+            "email" => [
+                "required",
+                "email",
+                "max:255",
+                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|net|org)$/'
+            ]
         ]);
-        $token = $request->query('token');
 
-        $user = User::where("id", $id)->first();
+        $user = User::where('email', $request->email)->first();
+
         if (!$user) {
             return response()->json([
                 "success" => false,
-                'messagekey' => "UsernotExist"
+                "message" => "User with this email not found."
             ], 404);
         }
 
-        $record = DB::table('password_reset_tokens')->where('email', $user->email)->first();
-        if (!$record) {
-            return response()->json([
-                "success" => false,
-                'messagekey' => "Invalidtoken"
-            ], 400);
-        }
-        if ($token != $record->token) {
-            return response()->json([
-                "success" => false,
-                'messagekey' => "Invalidtoken"
-            ], 400);
-        }
-        $expiryTime = now()->subMinutes(15);
+        $check = $user->update([
+            "password" => Hash::make($request->password)
+        ]);
 
-        if ($record->created_at < $expiryTime) {
+        if ($check) {
             return response()->json([
-                "success" => false,
-                'messagekey' => "Expiredtoken"
-            ], 400);
+                "success" => true,
+                "message" => "Password updated successfully."
+            ], 200);
         }
-        $user->password = Hash::make($request->password);
-        $user->save();
-        DB::table('password_reset_tokens')->where('email', $user->email)->delete();
 
         return response()->json([
-            "success" => true,
-            'messagekey' => "PasswordChangeSuccess"
-        ]);
+            "success" => false,
+            "message" => "Failed to update password."
+        ], 500);
     }
 }
