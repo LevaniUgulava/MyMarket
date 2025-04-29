@@ -25,6 +25,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::post('/addcart/{product}', [CartController::class, 'cart'])->middleware('auth:sanctum');
 Route::get('/mycart', [CartController::class, 'getcart'])->middleware('auth:sanctum');
 Route::post('/quantity/{id}/{action}', [CartController::class, 'updatequantity'])->middleware('auth:sanctum');
-Route::post('/size/{id}', [CartController::class, 'changeSize'])->middleware('auth:sanctum');
-Route::post('/color/{id}', [CartController::class, 'changeColor'])->middleware('auth:sanctum');
+Route::patch('/size/{id}', [CartController::class, 'changeSize'])->middleware('auth:sanctum');
+Route::patch('/color/{id}', [CartController::class, 'changeColor'])->middleware('auth:sanctum');
 Route::post('/delete/{id}/cart', [CartController::class, 'deletecart'])->middleware('auth:sanctum');

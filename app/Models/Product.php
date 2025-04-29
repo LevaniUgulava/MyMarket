@@ -175,10 +175,9 @@ class Product extends Model implements HasMedia
     public function carts()
     {
         return $this->belongsToMany(Cart::class, 'cart_item')
-            ->join()
-            ->withPivot('quantity', 'retail_price')
-            ->withTimestamps();
+            ->withPivot(['quantity', 'size', 'color', 'retail_price', 'total_price']);
     }
+
 
     public function orders()
     {

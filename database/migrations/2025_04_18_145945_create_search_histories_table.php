@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('cart_item', function (Blueprint $table) {
-            $table->string("color")->after("size")->nullable();
+        Schema::create('search_histories', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger("user_id");
+            $table->string("term");
+            $table->timestamps();
         });
     }
 
@@ -21,8 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('cart_item', function (Blueprint $table) {
-            $table->dropColumn("color");
-        });
+        Schema::dropIfExists('search_histories');
     }
 };

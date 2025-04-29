@@ -68,34 +68,15 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsToMany(Product::class, 'product_comment')->withPivot('comment')->withTimestamps();
     }
 
-    public function carts()
+    public function cart()
     {
-        return $this->hasMany(Cart::class);
+        return $this->hasOne(Cart::class);
     }
 
 
     public function orders()
     {
         return $this->hasMany(Order::class);
-    }
-
-
-    public function cartItems()
-    {
-        return $this->hasMany(Cart::class)
-            ->join('cart_item', 'cart.id', '=', 'cart_item.cart_id')
-            ->join('products', 'products.id', '=', 'cart_item.product_id')
-            ->select(
-                'products.id',
-                'products.name',
-                "products.price",
-                "products.discountprice",
-                'cart_item.quantity',
-                'cart_item.retail_price',
-                'cart_item.size',
-                'cart_item.color',
-                'cart_item.total_price'
-            );
     }
 
 
@@ -132,5 +113,10 @@ class User extends Authenticatable implements MustVerifyEmail
         }
 
         return round($defaultPrice, 2);
+    }
+
+    public function searchies()
+    {
+        return $this->hasMany(SearchHistory::class);
     }
 }

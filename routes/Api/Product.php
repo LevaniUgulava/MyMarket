@@ -3,6 +3,9 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RateContorller;
+use App\Http\Controllers\SearchController;
+use Google\Service\CloudIdentity\Group;
+use Google\Service\Compute\Router;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -43,3 +46,12 @@ Route::post('/product/rate/{id}', [RateContorller::class, 'SendRate'])->middlewa
 
 Route::get('/getSizes', [ProductController::class, 'getSizes']);
 Route::get('/nameforsearch', [ProductController::class, 'getNameforSearch']);
+
+Route::group(['prefix' => '/search'], function () {
+    Route::group(["middleware" => 'auth:sanctum'], function () {
+        Route::get("/user", [SearchController::class, "getSearcHistory"]);
+        Route::post("/add", [SearchController::class, "setSearchHistory"]);
+    });
+    Route::get("/popular", [SearchController::class, "getPopularHistory"]);
+    Route::get("/getwithCategories", [SearchController::class, "getwithCategories"]);
+});

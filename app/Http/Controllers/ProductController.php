@@ -10,6 +10,7 @@ use App\Notifications\DiscountNotification;
 use App\Repository\Product\ProductRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 
 class ProductController extends Controller
 {
@@ -31,13 +32,19 @@ class ProductController extends Controller
         $sizes = $request->query('sizes');
         $colors = $request->query('colors');
         $brands = $request->query('brands');
-
-
         $pagination = $request->get('perPage', 16);
+
 
         $result = [];
         foreach ($section as $s) {
-            $products = $this->productRepository->display($name, $maincategoryids, $categoryids, $subcategoryids, $pagination, $user, $s, null, $price1, $price2, $colors, $sizes, $brands);
+            $cachekey = "Products:" . md5($s);
+            $cachedData = Redis::get($cachekey);
+            if (!$cachedData) {
+                $products = $this->productRepository->display($name, $maincategoryids, $categoryids, $subcategoryids, $pagination, $user, $s, null, $price1, $price2, $colors, $sizes, $brands);
+                Redis::setex($cachekey, 3600, json_encode($products));
+            } else {
+                $products = json_decode($cachedData, true);
+            }
             $result[$s] = [
                 'data' => $products->map(fn($product) => new ProductResource($product, $user)),
                 'meta' => [
@@ -177,7 +184,7 @@ class ProductController extends Controller
     }
     public function getNameforSearch()
     {
-        $productNames = Product::distinct()->pluck("name");
+        $productNames = Product::select('name')->distinct()->inRandomOrder()->pluck('name');
         return response()->json($productNames);
     }
 }

@@ -18,16 +18,13 @@ class AuthController extends Controller
 {
     public function register(RegisterRequest $request)
     {
-        $token = str_pad(mt_rand(0, 99999999), 8, '0', STR_PAD_LEFT);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            "confirmation_token" => $token
+            'userstatus_id' => 1,
         ]);
-
-        // $user->notify(new CustomVerifyEmail($token));
 
         $user->assignRole('default');
         $roles = $user->getRoleNames();

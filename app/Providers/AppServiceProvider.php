@@ -13,6 +13,8 @@ use App\Repository\Product\ProductRepository;
 use App\Repository\Product\ProductRepositoryInterface;
 use App\Repository\Roles\RolesRepository;
 use App\Repository\Roles\RolesRepositoryInterface;
+use App\Repository\Search\SearchRepository;
+use App\Repository\Search\SearchRepositoryInterface;
 use App\Repository\UserStatus\UserStatusRepository;
 use App\Repository\UserStatus\UserStatusRepositoryInterface;
 use Illuminate\Database\Eloquent\Model;
@@ -31,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(UserStatusRepositoryInterface::class, UserStatusRepository::class);
         $this->app->singleton(EligibleProductRepositoryInterface::class, EligibleProductRepository::class);
         $this->app->singleton(BrandRepositoryInterface::class, BrandRepository::class);
+        $this->app->singleton(SearchRepositoryInterface::class, SearchRepository::class);
     }
 
     /**

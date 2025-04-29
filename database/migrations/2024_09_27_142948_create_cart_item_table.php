@@ -16,7 +16,8 @@ return new class extends Migration
             $table->unsignedBigInteger('cart_id');
             $table->unsignedBigInteger('product_id');
             $table->integer('quantity')->default(1);
-            $table->string('size');
+            $table->string('size')->nullable();
+            $table->string("color")->nullable();
             $table->decimal('retail_price', 8, 2);
             $table->decimal('total_price', 8, 2);
             $table->timestamps();
