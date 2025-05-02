@@ -161,7 +161,7 @@ class PaymentController extends Controller
                 $i = $this->managequantity($item['product_id'], $item['size'], $item["color"], $item['quantity']);
             }
             if ($user && $get['type'] === "cart") {
-                $cart = $user->carts()->latest()->first();
+                $cart = $user->cart;
 
                 if (!$cart) {
                     return response()->json(['message' => 'No active cart available for checkout'], 404);

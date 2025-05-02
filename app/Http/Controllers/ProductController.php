@@ -37,14 +37,7 @@ class ProductController extends Controller
 
         $result = [];
         foreach ($section as $s) {
-            $cachekey = "Products:" . md5($s);
-            $cachedData = Redis::get($cachekey);
-            if (!$cachedData) {
-                $products = $this->productRepository->display($name, $maincategoryids, $categoryids, $subcategoryids, $pagination, $user, $s, null, $price1, $price2, $colors, $sizes, $brands);
-                Redis::setex($cachekey, 3600, json_encode($products));
-            } else {
-                $products = json_decode($cachedData, true);
-            }
+            $products = $this->productRepository->display($name, $maincategoryids, $categoryids, $subcategoryids, $pagination, $user, $s, null, $price1, $price2, $colors, $sizes, $brands);
             $result[$s] = [
                 'data' => $products->map(fn($product) => new ProductResource($product, $user)),
                 'meta' => [

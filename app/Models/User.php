@@ -4,11 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
-use App\Events\RegisterNotification as EventsRegisterNotification;
-use App\Notifications\CustomVerifyEmail;
-use App\Notifications\RegisterNotification;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
+
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;

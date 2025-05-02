@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\CategoryController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -49,3 +50,4 @@ Route::get('/sizes', [CategoryController::class, 'displaysize']);
 Route::get('/maincategory/{id}', [CategoryController::class, 'Maincategorybyid']);
 Route::get('/category/{id}', [CategoryController::class, 'categorybyid']);
 Route::get('/subcategory/{id}', [CategoryController::class, 'subcategorybyid']);
+

@@ -65,7 +65,7 @@ class CartController extends Controller
 
         $user = Auth::user();
 
-        $cart = $user->cart ?? Cart::create(['user_id' => $user->id]);
+        $cart = $user->cart ?? Cart::create(['user_id' => $user->id, 'cart_total_price' => 0]);
 
 
 
@@ -134,29 +134,43 @@ class CartController extends Controller
     {
         $user = Auth::user();
         $cart = $user->cart;
+
+        // Products in the cart
         $products = $cart->products()->get()->map(function ($product) use ($user) {
             $productModel = Product::find($product->id);
 
+            // Get media URLs for the product images
             $product->image_urls = $productModel->getMedia('default')->map(function ($media) {
-                return  url('storage/' . $media->id . '/' . $media->file_name);
+                return url('storage/' . $media->id . '/' . $media->file_name);
             });
+
+            // Get the product price with discount
             $product->price = $user->getPriceByStatus($productModel, $product->price, $product->discountprice);
 
+            // Get the available sizes for the product
             $product->size = $this->productService->getSizeData($product);
+
+            // Remove unnecessary field
             unset($product->clothsize);
+
+            // Calculate the total price for this product
+            $product->total_price = $product->pivot->total_price;  // Ensure the correct total price
+
             return $product;
         });
 
+        // Recalculate the total cart price based on the product total prices
+        $totalPrice = $products->sum(function ($product) {
+            return $product->pivot->total_price;  // Sum of total prices of all products in the cart
+        });
 
-        $totalPrice = $products->map(function ($product) {
-            return $product->pivot->total_price;
-        })->sum();
+        // Update the cart total price
+        $cart->cart_total_price = $totalPrice;
+        $cart->save(); // Save the cart with updated total price
 
+        // Return products and total price as a response
         return response()->json(["products" => $products, 'totalPrice' => $totalPrice]);
     }
-
-
-
 
 
     public function updatequantity($id, $action, ProductService $productService)
@@ -197,7 +211,16 @@ class CartController extends Controller
             ]);
 
         if ($updated) {
-            return response()->json(['message' => 'Quantity updated successfully']);
+            $totalPrice = $cart->products->map(function ($product) {
+                return $product->pivot->total_price;
+            })->sum();
+
+            $cart->update(['cart_total_price' => $totalPrice]);
+            return response()->json([
+                "quantity" => $currentquantity,
+                'total_price' => $newTotalPrice,
+                "cart_total_price" => $cart->cart_total_price
+            ]);
         } else {
             return response()->json(['error' => 'Failed to update quantity'], 500);
         }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Helpers\ProductHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Models\Collection;
@@ -11,6 +12,12 @@ use Illuminate\Support\Facades\Auth;
 
 class CollectionController extends Controller
 {
+    protected $productHelper;
+
+    public function __construct(ProductHelper $productHelper)
+    {
+        $this->productHelper = $productHelper;
+    }
 
     public function getcollection()
     {
@@ -48,59 +55,50 @@ class CollectionController extends Controller
         return response()->json(['message' => 'Collection deleted successfully']);
     }
 
-    public function singlecollection(Collection $collection)
+    public function singlecollection(Collection $collection, Request $request)
     {
         $user = auth('sanctum')->user();
-        $likedProductIds = $user ? $user->manyproducts()->pluck('product_id')->toArray() : [];
-        $collection->load([
-            'products' => function ($query) {
-                $query->withAvg('rateproduct', 'rate');
-            }
-        ]);
+        $name = $request->query('searchname', '');
+        $maincategoryids = $request->query('maincategory', '');
+        $categoryids = $request->query('category', '');
+        $subcategoryids = $request->query('subcategory', '');
+        $section = (array)$request->query('section', []);
+        $price1 = $request->query('min', '');
+        $price2 = $request->query('max', '');
+        $sizes = $request->query('sizes');
+        $colors = $request->query('colors');
+        $brands = $request->query('brands');
 
-        $collection->products->transform(function ($product) use ($likedProductIds, $user) {
-            $product->image_urls = $product->getMedia('default')->map(fn($media) => $media->getUrl());
+        $ProductQuery = $collection->products();
 
-            $product->isLiked = in_array($product->id, $likedProductIds);
+        $products = $ProductQuery
+            ->with(['Maincategory:id,name', 'Category:id,name', 'Subcategory:id,name', 'eligibleStatuses'])
+            ->when($name, fn($query) => $query->searchname($name))
+            ->when($maincategoryids, fn($query) => $query->searchmain($maincategoryids))
+            ->when($categoryids, fn($query) => $query->searchcategory($categoryids))
+            ->when($subcategoryids, fn($query) => $query->searchsubcategory($subcategoryids))
+            ->when($section, fn($query) => $query->section($user, $section))
+            ->when($price1 || $price2, fn($query) => $query->price($price1, $price2))
+            ->when($sizes, fn($query) => $query->size($sizes))
+            ->when($colors, fn($query) => $query->color($colors))
+            ->when($brands, fn($query) => $query->brand($brands))
+            ->where('active', 1)
+            ->paginate(16);
 
-            if ($user) {
-                $isEligible = $product->eligibleStatuses()
-                    ->wherePivot('userstatus_id', $user->userstatus->id)
-                    ->withPivot('discount')
-                    ->first();
 
-                if ($isEligible) {
-                    $product->discountstatus = [
-                        'userstatus' => $user->userstatus,
-                        'discount' => $isEligible->pivot->discount,
-                    ];
-                    $product->discountstatusprice = $user->getPriceByStatus(
-                        $product,
-                        $product->price,
-                        $product->price
-                    );
-                } else {
-                    $product->discountstatus = null;
-                    $product->discountstatusprice = $product->discountprice;
-                }
-            } else {
-                $product->discountstatus = null;
-                $product->discountstatusprice = $product->discountprice;
-            }
+        $this->productHelper->transform($products, $user);
 
-            return $product;
-        });
+
 
         return response()->json([
             'collection' => [
                 'id' => $collection->id,
                 'title' => $collection->title,
-                'headerColor' => $collection->headerColor,
                 'description' => $collection->description,
                 'discount' => $collection->discount,
                 'created_at' => $collection->created_at,
                 'updated_at' => $collection->updated_at,
-                'products' => ProductResource::collection($collection->products),
+                'products' => ProductResource::collection($products, $user),
             ]
         ]);
     }
